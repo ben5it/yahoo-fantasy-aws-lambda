@@ -10,7 +10,7 @@ Note that for a .zip deployment package, Lambda expects your source code and its
 2. Install your required libraries using pip.
 
 ```
-pip install  --target ./package   -r requirements.txt
+pip install --target ./package -r requirements.txt
 ```
 
 1. Create a .zip file with the installed libraries at the root.
