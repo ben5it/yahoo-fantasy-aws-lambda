@@ -7,6 +7,8 @@ import base64
 import jwt
 import time
 import uuid
+import boto3
+from decimal import Decimal
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -85,23 +87,34 @@ def lambda_handler(event, context):
             profile_image = id_token['profile_images']['image32']
             nickname = id_token['nickname']
             email = id_token['email']
-            logger.info("access_token %s", access_token)
-            logger.info("refresh_token %s", refresh_token)
-            logger.info("id_token %s", id_token)
-            logger.info("user_id %s", user_id)
-            # return {
-            #     "isBase64Encoded": False,
-            #     "statusCode": 302,
-            #     "headers": {
-            #         "Location": "https://d3aibao6jz53if.cloudfront.net"
-            #     },
-            #     "multiValueHeaders": {"Set-Cookie": ["cookie3=chocolate-chip2", "cookie4=oatmeal"]},
-            #     "body": json.dumps({
-            #         "sessionId": str(uuid.uuid4()),
-            #         "userId": user_id
-            #     })
-            # }
+            # logger.info("access_token %s", access_token)
+            # logger.info("refresh_token %s", refresh_token)
+            # logger.info("id_token %s", id_token)
+            # logger.info("user_id %s", user_id)
+            sessionId =str(uuid.uuid4())
+            data = {
+                'sessionId': sessionId, 
+                'userId': user_id,
+                'nickname': nickname,
+                'email': email,                   
+                'profile_image':profile_image,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'expiration_time':expiration_time                
+            }
+            logger.info(data)
+            ddb_data = json.loads(json.dumps(data), parse_float=Decimal)
+            dynamodb = boto3.resource('dynamodb') 
+            table = dynamodb.Table('yahoo_fantasy') 
+            #inserting values into table 
+            response = table.put_item(Item = ddb_data) 
+            
             return {
-                'statusCode': 401,
-                'body': json.dumps(id_token)
+                "cookies" : [f"sessionId={sessionId}"],
+                "isBase64Encoded": False,
+                "statusCode": 302,
+                "headers": {
+                    "Location": "https://d3aibao6jz53if.cloudfront.net"
+                },
+                "body": ""
             }
