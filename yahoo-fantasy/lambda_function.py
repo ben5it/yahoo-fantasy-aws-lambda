@@ -22,7 +22,7 @@ def lambda_handler(event, context):
     # for routes other than login and callback, we need  session id
     sessionId = utils.getSessionIdFromCookies(event['cookies'])
     logger.info('SessionId: %s', sessionId)
-    valid = utils.isValidSession(sessionId)
+    valid = yOauth.isValidSession(sessionId)
     if valid == False:
         logger.info('Invalid SessionId: %s, rediect to login page.', sessionId)
         return {
