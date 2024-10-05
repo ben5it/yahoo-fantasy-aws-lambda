@@ -61,7 +61,7 @@ def callback(queryString):
     
         raw_token = requests.post(config.ACCESS_TOKEN_URL, data=data, headers = headers)
         parsed_token = raw_token.json()
-        logger.debug(parsed_token)
+        logger.info(parsed_token)
         if 'error' in parsed_token:
             return {
                 'statusCode': 401,
@@ -70,7 +70,7 @@ def callback(queryString):
         else:
             access_token = parsed_token["access_token"]
             refresh_token = parsed_token["refresh_token"]
-            expiration_time = time.time() + parsed_token["expires_in"]
+            expiration_time = int(time.time() + parsed_token["expires_in"])
             id_token = jwt.decode(parsed_token["id_token"], options={"verify_signature": False})
             user_id = id_token['sub']
             profile_image = id_token['profile_images']['image32']
