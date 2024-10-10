@@ -1,6 +1,6 @@
 import boto3
 import os
-import time
+import datetime
 
 
 from config import logger
@@ -17,4 +17,13 @@ def getSessionIdFromCookies(cookies):
             break
 
     return sessionId
+
+
+def getDefaultSeason():
+    today = datetime.date.today()
+    season = today.year
+    if today.month < 10 or (today.month == 10 and today.day < 20): # nba season usually starts at the end of Oct
+        season -= 1   
+    
+    return season
 

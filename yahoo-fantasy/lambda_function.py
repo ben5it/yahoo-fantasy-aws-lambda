@@ -1,3 +1,4 @@
+import json
 import os
 
 from config import logger
@@ -22,7 +23,7 @@ def lambda_handler(event, context):
     # for routes other than login and callback, we need  session id
     sessionId = utils.getSessionIdFromCookies(event['cookies'])
     logger.info('SessionId: %s', sessionId)
-    valid = yOauth.isValidSession(sessionId)
+    valid, access_token = yOauth.isValidSession(sessionId)
     if valid == False:
         logger.info('Invalid SessionId: %s, rediect to login page.', sessionId)
         return {
@@ -33,11 +34,16 @@ def lambda_handler(event, context):
             }
         }
 
-   
-    
-    if path =='/api/userleauges':
+    fantasyapi.ACCESS_TOKEN = access_token
 
-        return fantasyapi.get_leagues()
+    
+    if path =='/api/leauges':
+
+        leagues = fantasyapi.get_leagues()
+        return {
+            'statusCode': 200,
+            'body': json.dumps(leagues)
+        }
 
     elif path == '/api/analyze':
 

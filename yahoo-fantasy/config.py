@@ -11,7 +11,7 @@ LOGIN_CALLBACK_URL = BASE_URL + "/callback"
 # yahoo urls
 AUTHORIZE_URL="https://api.login.yahoo.com/oauth2/request_auth"
 ACCESS_TOKEN_URL="https://api.login.yahoo.com/oauth2/get_token"
-FANTASY_API_URL = "https://fantasysports.yahooapis.com/fantasy/v2/"
+FANTASY_API_URL = "https://fantasysports.yahooapis.com/fantasy/v2"
 
 
 # project root directory

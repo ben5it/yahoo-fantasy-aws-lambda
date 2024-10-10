@@ -121,6 +121,9 @@ def isValidSession(sessionId):
     resp  = table.get_item(Key={"sessionId": sessionId})
     if 'Item' in resp:
         expiration_time = float(resp['Item']['expiration_time'])
+        userId = resp['Item']['userId']
+        access_token = resp['Item']['access_token']
+
         now = time.time()
 
         if expiration_time - now < 0: 
@@ -131,9 +134,9 @@ def isValidSession(sessionId):
             logger.info("expiring in 5 minute, need to refresh token.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
             current_refresh_token = resp['Item']['refresh_token']
             refresh_token(sessionId, current_refresh_token)
-            return True
+            return True, access_token
         else:
-            return True
+            return True, access_token
     else:
         logger.info("SessionId {} not found in db".format(sessionId))
         return False

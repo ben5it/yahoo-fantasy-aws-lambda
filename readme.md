@@ -16,11 +16,14 @@ Note that for a .zip deployment package, Lambda expects your source code and its
 pip install --target ./package -r requirements.txt
 ```
 
+
+
 1. Create a .zip file with the installed libraries at the root.
 
 
 ```
 cd package
+find . | grep -E "(__pycache__|\.pyc$$|\.dist-info$)" | xargs rm -rf
 zip -r ../my_deployment_package.zip .
 ```
 This generates a my_deployment_package.zip file in your project directory.
