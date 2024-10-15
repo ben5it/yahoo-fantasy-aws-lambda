@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  yahoo-fantasy
+
+  Sample SAM Template for yahoo-fantasy
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: your website domain name
+    Default: fantasy.laohuang.org
+  ProjectName:
+    Type: String
+    Description: your project name
+    Default: yahoo-fantasy
+  ClientId:
+    Type: String
+    Description: the yahoo applicaiton client id
+    Default: id
+  ClientSecret:
+    Type: String
+    Description: the yahoo applicaiton client secrect
+    Default: secrect
+
+Resources:
+  LambdaExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        -
+          PolicyName: 'LambdaLogging'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+              -
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt LambdaLogGroup.Arn
+        -
+          PolicyName: 'LambdaDynamoDBAccess'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 'dynamodb:*'
+                Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProjectName}'
+        -
+          PolicyName: 'LambdaS3Access'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - 's3:ListBucket'
+                Resource: !GetAtt S3Bucket.Arn
+              -
+                Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource: !Sub '${S3Bucket.Arn}/data/*'
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}"
+      RetentionInDays: 1
+
+  LamndaFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      FunctionName: !Ref ProjectName
+      Architectures:
+        - x86_64
+      Events:
+        LoginApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /login
+            Method: get
+        CallbackApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /callback
+            Method: get
+        LeaguesApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /api/leagues
+            Method: get
+        AnalyzeApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /api/analyze
+            Method: post
+      Environment:
+        Variables:
+          CLIENT_ID:  !Ref ClientId
+          CLIENT_SECRET: !Ref ClientSecret
+          DB_TABLE_NAME: !Ref ProjectName
+          S3_BUCKET_NAME: !Ref DomainName
+          BASE_URL: !Sub https://${DomainName}
+      Role: !GetAtt LambdaExecRole.Arn
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: "Retain"
+    DeletionPolicy: Delete
+    Properties:
+      TableName: !Ref ProjectName
+      AttributeDefinitions:
+        - AttributeType: "S"
+          AttributeName: "sessionId"
+      KeySchema:
+        - KeyType: "HASH"
+          AttributeName: "sessionId"
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: "expireAt"
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref ProjectName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: "AES256"
+      WebsiteConfiguration:
+        IndexDocument: "index.html"
+        ErrorDocument: "error.html"
+      PublicAccessBlockConfiguration:
+        RestrictPublicBuckets: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        BlockPublicAcls: true
+      OwnershipControls:
+        Rules:
+        - ObjectOwnership: "BucketOwnerEnforced"
+

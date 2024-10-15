@@ -1,5 +1,0 @@
-objectpath
-PyJWT
-pytz
-requests
-

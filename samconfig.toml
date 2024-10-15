@@ -1,0 +1,35 @@
+# More information about the configuration file can be found here:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "yahoo-fantasy"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+s3_prefix = "yahoo-fantasy"
+region = "us-east-1"
+image_repositories = []
+parameter_overrides = "DomainName=\"fantasy.laohuang.org\" ProjectName=\"yahoo-fantasy\" ClientId=\"dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw\" ClientSecret=\"b387ea999b6615b308c8a67fd3ea70f778e8703a\""
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
