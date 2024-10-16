@@ -37,7 +37,7 @@ def lambda_handler(event, context):
     fantasyapi.ACCESS_TOKEN = access_token
 
     
-    if path =='/api/leauges':
+    if path =='/api/leagues':
 
         leagues = fantasyapi.get_leagues()
         return {
@@ -48,5 +48,13 @@ def lambda_handler(event, context):
     elif path == '/api/analyze':
 
         return fantasyapi.analyze(event['body'])
+    
+            
+    else:
+        return {  #         <---- RETURN THIS RIGHT AWAY 
+            'statusCode': 200,
+            'body': json.dumps('Hello from Lambda! Real Test')
+        }
+
 
  

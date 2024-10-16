@@ -78,12 +78,12 @@ Resources:
                 Effect: Allow
                 Action:
                   - 's3:ListBucket'
-                Resource: !GetAtt S3Bucket.Arn
+                Resource: !Sub 'arn:aws:s3:::${DomainName}'
               -
                 Effect: Allow
                 Action:
                   - 's3:*'
-                Resource: !Sub '${S3Bucket.Arn}/data/*'
+                Resource: !Sub 'arn:aws:s3:::${DomainName}/data/*'
   LambdaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -147,24 +147,72 @@ Resources:
       TimeToLiveSpecification:
         Enabled: true
         AttributeName: "expireAt"
-  S3Bucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref ProjectName
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - BucketKeyEnabled: true
-            ServerSideEncryptionByDefault:
-              SSEAlgorithm: "AES256"
-      WebsiteConfiguration:
-        IndexDocument: "index.html"
-        ErrorDocument: "error.html"
-      PublicAccessBlockConfiguration:
-        RestrictPublicBuckets: true
-        IgnorePublicAcls: true
-        BlockPublicPolicy: true
-        BlockPublicAcls: true
-      OwnershipControls:
-        Rules:
-        - ObjectOwnership: "BucketOwnerEnforced"
+  # StaticWebSiteS3Bucket:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     BucketName: !Ref ProjectName
+  #     BucketEncryption:
+  #       ServerSideEncryptionConfiguration:
+  #         - BucketKeyEnabled: true
+  #           ServerSideEncryptionByDefault:
+  #             SSEAlgorithm: "AES256"
+  #     WebsiteConfiguration:
+  #       IndexDocument: "index.html"
+  #       ErrorDocument: "error.html"
+  #     AccessControl: Private
+  # BucketPolicy:
+  #   Type: AWS::S3::BucketPolicy
+  #   Properties:
+  #     Bucket:
+  #       Ref: "StaticWebSiteS3Bucket"
+  #     PolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #       - Condition:
+  #           ArnEquals:
+  #             SourceArn:
+  #               Fn::GetAtt:
+  #               - "CloudFrontDistribution"
+  #               - "Arn"
+  #         Effect: Allow
+  #         Principal:
+  #           Service: "cloudfront.amazonaws.com"
+  #         Action: 's3:GetObject'
+  #         Resource: !Sub '${StaticWebSiteS3Bucket.Arn}/*'
+  # CloudFrontOriginIdentity:
+  #   Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+  #   Properties:
+  #     CloudFrontOriginAccessIdentityConfig:
+  #       Comment: 'origin identity'
+  # CloudFrontDistribution:
+  #   Type: AWS::CloudFront::Distribution
+  #   Properties:
+  #     DistributionConfig:
+  #       DefaultRootObject: "index.html"
+  #       Origins:
+  #         - DomainName:
+  #             Fn::GetAtt:
+  #             - "StaticWebSiteS3Bucket"
+  #             - "RegionalDomainName"
+  #           S3OriginConfig:
+  #             OriginAccessIdentity: ""
+  #           # OriginPath: ""
+  #           Id: "fantasy.laohuang.org.s3.us-east-1.amazonaws.com"
+  #       Enabled: 'true'
+  #       DefaultCacheBehavior:
+  #         AllowedMethods:
+  #           - GET
+  #           - HEAD
+  #         TargetOriginId: "fantasy.laohuang.org.s3.us-east-1.amazonaws.com"
+  #         ForwardedValues:
+  #           QueryStringCacheKeys: []
+  #           Cookies:
+  #             Forward: "all"
+  #           Headers: []
+  #           QueryString: true
+  #         ViewerProtocolPolicy: redirect-to-https
+  #       ViewerCertificate:
+  #         MinimumProtocolVersion: "TLSv1.2_2021"
+  #         SslSupportMethod: "sni-only"
+  #         AcmCertificateArn: "arn:aws:acm:us-east-1:711387121254:certificate/2e1c3799-2a39-4d43-906d-6fd5824344f7"
 

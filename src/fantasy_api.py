@@ -1,4 +1,4 @@
-# import json
+import json
 # import os
 import requests
 from urllib.parse import parse_qs
@@ -93,7 +93,7 @@ def get_game_stat_categories():
         jfilter = t.execute('$..stat_categories..stats..(stat_id, display_name, sort_order)')
 
         for c in jfilter:
-            if c['stat_id'] is not None and c['display_name'] is not None and c['sort_order'] is not None:
+            if 'stat_id' in c and 'display_name' in c and 'sort_order' in c:
                 categories[c['stat_id']] = c
 
         logger.info('categories')

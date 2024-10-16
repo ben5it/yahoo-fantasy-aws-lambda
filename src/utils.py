@@ -61,7 +61,7 @@ def save_json_to_s3(json_data, file_key, bucket_name = None):
     s3 = boto3.client('s3')
     
     try:
-        json_content = json.dumps(json_data)
+        json_content = json.dumps(json_data, indent=2)
         s3.put_object(Bucket=bucket_name, Key=file_key, Body=json_content, ContentType='application/json')
         logger.info(f"Successfully saved JSON to {bucket_name}/{file_key}")
     except (NoCredentialsError, PartialCredentialsError):

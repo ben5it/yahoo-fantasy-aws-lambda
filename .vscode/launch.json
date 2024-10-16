@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "Analze",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "${workspaceFolder}/template.yaml",
+        "logicalId": "LamndaFunction"
+      },
+      "api": {
+        "path": "/api/analyze",
+        "httpMethod": "post",
+        "payload": {
+          "json": {
+            "league_key": "428.l.7124",
+            "league_id": "7124",
+            "week": "1"
+          }
+        },
+        "querystring": "abc=def&qrs=tuv",
+        "headers": {
+          "cookie": "sessionId=cb19bfa8-df6f-46de-b564-71b7d4bb3129; name2=value2; name3=value3"
+        }
+      }
+    }
+  ]
+}

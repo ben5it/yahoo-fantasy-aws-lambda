@@ -112,11 +112,11 @@ def callback(queryString):
 def isValidSession(sessionId):
     
     if sessionId is None or sessionId == '':
-        return False
+        return False, None
 
     logger.info('try to find session in db')        
     dynamodb = boto3.resource('dynamodb') 
-    table = dynamodb.Table(os.environ.get("DynamoDB_Table")) 
+    table = dynamodb.Table(config.DynamoDB_Table) 
 
     resp  = table.get_item(Key={"sessionId": sessionId})
     if 'Item' in resp:
