@@ -48,9 +48,26 @@ def get_leagues():
 def analyze(body):
 
     
-    logger.info('request data for analyze： %s', body)
+    logger.info('request data for analyze：')
+    logger.info(body)
+
+    if 'league_key' in body and 'week' in body and 'league_id' in body:
+
+        league_key = body['league_key']
+        league_id = body['league_id']
+        week = int (body['week'])
     
-    get_game_stat_categories()
+        game_stat_categories = get_game_stat_categories()
+        teams = get_league_teams(league_key, league_id)
+
+        league_stat = []
+        for team in teams:
+            team_stat = get_team_stat(team['team_key'], game_stat_categories, week)
+            league_stat.append(team_stat)
+
+        league_stat_categories = get_league_stat_categories(league_key)
+
+
     
     # parms = parse_qs(queryString)
 
@@ -65,8 +82,44 @@ def analyze(body):
 def get_league_stat_categories(league_key):
     pass
 
-def get_league_teams(league_key):
-    pass
+def get_league_teams(league_key, league_id):
+
+    # if data already cached in s3, read from s3;
+    # otherwise retirive from yahoo and save to s3
+    season = utils.getDefaultSeason()
+    file_path = f"data/{season}/{league_id}/teams.json"
+    teams = utils.get_json_from_s3(file_path)
+    if teams is not None:
+        logger.info(json.dumps(teams, indent=4))  
+    else:
+        logger.info("Try to retrive leagues teams from yahoo.")
+        uri = f"league/{league_key}/teams"
+        resp = get_request(uri)
+        t = objectpath.Tree(resp)
+        jfilter = t.execute('$..teams..team..(team_key, team_id, name, team_logos)')
+        teams = []
+
+        t = {}
+        for p in jfilter:
+            # app.logger.debug(p)
+            if ('team_logos' in p):
+                t['team_logos'] = p['team_logos'][0]['team_logo']['url']
+            else:
+                t.update(p)
+
+            # team logo is the last property
+            if ('team_logos' in t):
+                teams.append(t)
+                t = {} 
+
+        # # sort by team id
+        teams.sort(key = lambda team : int(team['team_id']))
+
+        logger.info('teams')
+        logger.info(teams)
+        utils.save_json_to_s3(teams, file_path)
+    
+    return teams
 
 
 def get_team_stat(team_key, game_stat_categories, week=0):
@@ -81,7 +134,8 @@ def get_game_stat_categories():
     
     # if data already cached in s3, read from s3;
     # otherwise retirive from yahoo and save to s3
-    categories = utils.get_json_from_s3('data/game_stat_categories.json')
+    file_path = 'data/game_stat_categories.json'
+    categories = utils.get_json_from_s3(file_path)
     if categories is not None:
         logger.info(json.dumps(categories, indent=4))  
     else:
@@ -98,7 +152,9 @@ def get_game_stat_categories():
 
         logger.info('categories')
         logger.info(categories)
-        utils.save_json_to_s3(categories, 'data/game_stat_categories.json')
+        utils.save_json_to_s3(categories, file_path)
+    
+    return categories
 
 def get_league_matchup( league_teams, week):
     pass

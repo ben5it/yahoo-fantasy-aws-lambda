@@ -47,7 +47,7 @@ def lambda_handler(event, context):
 
     elif path == '/api/analyze':
 
-        return fantasyapi.analyze(event['body'])
+        return fantasyapi.analyze(json.loads(event['body']))
     
             
     else:
