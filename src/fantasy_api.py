@@ -16,6 +16,7 @@ import pandas as pd
 from pandas import DataFrame
 
 import utils
+import compute
 import config
 from config import logger
 
@@ -76,6 +77,9 @@ def analyze(body):
 
         stat_names = league_week_stats[0].keys()
         team_names = list(map(lambda x: x['name'], teams))
+        team_keys = list(map(lambda x: x['team_key'], teams))
+
+        l_stats = get_league_stat(team_keys, game_stat_categories, week)
         
         week_df = pd.DataFrame(columns=stat_names, index=team_names)
         week_df.columns.name = 'Team Name'
@@ -91,19 +95,20 @@ def analyze(body):
         week_df = week_df.astype(data_types)
         total_df = total_df.astype(data_types)
 
+        week_score = compute.stat_to_score(week_df, sort_orders)
+        total_score = compute.stat_to_score(total_df, sort_orders)
+        # battle_score = compute.roto_score_to_battle_score(week_score, week_points)
+
+        # write to S3
         season = utils.getDefaultSeason()
         week_stats_csv_file_key = f"data/{season}/{league_id}/{week}/stats.csv"
-        utils.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
-
         total_stats_csv_file_key = f"data/{season}/{league_id}/0/stats.csv"
-        utils.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
-
-        week_score = utils.stat_to_score(week_df, sort_orders)
-        total_score = utils.stat_to_score(total_df, sort_orders)
         week_score_csv_file_key = f"data/{season}/{league_id}/{week}/roto-score.csv"
-        utils.write_dataframe_to_csv_on_s3(week_score, week_score_csv_file_key)
-
         total_score_csv_file_key = f"data/{season}/{league_id}/0/roto-score.csv"
+
+        utils.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
+        utils.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
+        utils.write_dataframe_to_csv_on_s3(week_score, week_score_csv_file_key)
         utils.write_dataframe_to_csv_on_s3(total_score, total_score_csv_file_key)
 
         league_stat_categories = get_league_stat_categories(league_key)
@@ -219,6 +224,75 @@ def get_team_stat(team_key, game_stat_categories, week=0):
 
         return stats, data_types, sort_orders, point
 
+def get_league_stat(teams, game_stat_categories, week=0):
+    '''
+    Return the stats of a team for a certain week, or the season(week==0)
+    '''
+    teams_str = ','.join(teams)
+    if week==0:
+        uri = f"teams;team_keys={teams_str}/stats;type=season"
+    else:
+        uri = f"teams;team_keys={teams_str}/stats;type=week;week={week}"
+    logger.debug(uri)
+    resp = get_request(uri)
+    tree = objectpath.Tree(resp)
+    jfilter = tree.execute('$..teams..team..team_stats.stats')
+
+    leagues_stats = []
+    data_types = {}
+    sort_orders = {}
+    for t in jfilter:
+        team_stats = {}
+        for s in t:
+            e = s['stat']
+            stat_id = e['stat_id'] 
+
+            # make sure stat_id in game stat categories to filter out display only stat
+            if stat_id in game_stat_categories:
+                stat_name = game_stat_categories[stat_id]['display_name']
+                v = e['value']
+                if isinstance(v, str) and '.' in v:
+                    v = float(v)
+                    data_types[stat_name] ='float'
+                else:
+                    v = int(v)
+                    data_types[stat_name] = 'int'
+
+                team_stats[stat_name] = v
+
+                sort_order = game_stat_categories[stat_id]['sort_order']
+                sort_orders[stat_name] = sort_order
+
+        leagues_stats.append(team_stats)
+
+    df = pd.DataFrame(leagues_stats)   
+    df = df.astype(data_types)
+    
+    jfilter = tree.execute('$..teams..team..name')
+    team_names = []
+    for n in jfilter:
+        team_names.append(n)
+    df['Team'] = team_names
+    df.set_index('Team', inplace=True)
+
+    # {'FG%': 0.455, 'FT%': 0.746, '3PTM': 32, 'PTS': 322, 'OREB': 48, 'REB': 177, 'AST': 82, 'ST': 17, 'BLK': 17, 'TO': 38, 'A/T': 2.16}
+    # logger.debug(data_types)
+    # {'FG%': 'float', 'FT%': 'float', '3PTM': 'int', 'PTS': 'int', 'OREB': 'int', 'REB': 'int', 'AST': 'int', 'ST': 'int', 'BLK': 'int', 'TO': 'int', 'A/T': 'float'}
+    # logger.debug(sort_orders)
+    # ['1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '1']
+
+    jfilter = tree.execute('$..team_points.total')
+    points = []
+    for entry in jfilter:
+        point = (float)(entry)
+        points.append(point)
+    
+    logger.info(df)
+    logger.info(sort_orders)
+    logger.info(points)
+    return df, sort_orders, points
+
+
 def get_game_stat_categories():
     '''
     Return all available stat categories of the game(NBA),
@@ -250,8 +324,29 @@ def get_game_stat_categories():
     
     return categories
 
-def get_league_matchup( league_teams, week):
-    pass
+def get_league_matchup(league_teams, week):
+    '''
+    Return the matchup for a specified week.
+    '''
+
+    matchups = []
+    logger.debug('League teams') 
+    for team in league_teams:
+        logger.debug(team) 
+        uri = 'team/{}/matchups;weeks={}'.format(team['team_key'], week)
+        resp = get_request(uri)
+        # logger.debug(resp)
+        t = objectpath.Tree(resp)
+        jfilter = t.execute('$..teams..team..(name)')
+        for e in jfilter:
+            # logger.debug(e)
+            if e['name'] not in matchups:
+                matchups.append(e['name'])
+    logger.debug('Week {} Match up'.format(week))
+    for i in range(0, len(matchups), 2 ): 
+        logger.debug('{} VS {}'.format(matchups[i], matchups[i+1])) 
+
+    return matchups
 
 
 def get_request(path): 
