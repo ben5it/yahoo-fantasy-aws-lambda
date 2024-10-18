@@ -22,7 +22,7 @@ def login():
         'scope': "openid"
     }
     login_url  = config.AUTHORIZE_URL + '?' + urlencode(data, quote_via=quote)
-    logger.info('Login URL： %s', login_url)
+    logger.debug('Login URL： %s', login_url)
     return {
         "isBase64Encoded": False,
         "statusCode": 302,
@@ -34,7 +34,7 @@ def login():
 
 def callback(queryString):
 
-    logger.info('Raw Query String： %s', queryString)
+    logger.debug('Raw Query String： %s', queryString)
     parms = parse_qs(queryString)
 
     if 'code' not in parms:
@@ -61,7 +61,7 @@ def callback(queryString):
     
         raw_token = requests.post(config.ACCESS_TOKEN_URL, data=data, headers = headers)
         parsed_token = raw_token.json()
-        logger.info(parsed_token)
+        logger.debug(parsed_token)
         if 'error' in parsed_token:
             return {
                 'statusCode': 401,
@@ -91,10 +91,10 @@ def callback(queryString):
                 'expiration_time':expiration_time,
                 'expireAt': ttl             
             }
-            logger.info(data)
+            logger.debug(data)
             ddb_data = json.loads(json.dumps(data), parse_float=Decimal)
             dynamodb = boto3.resource('dynamodb') 
-            logger.info('DynamoDB_Table： %s', config.DynamoDB_Table)
+            logger.debug('DynamoDB_Table： %s', config.DynamoDB_Table)
             table = dynamodb.Table(config.DynamoDB_Table) 
             #inserting values into table 
             response = table.put_item(Item = ddb_data) 
@@ -114,7 +114,7 @@ def isValidSession(sessionId):
     if sessionId is None or sessionId == '':
         return False, None
 
-    logger.info('try to find session in db')        
+    logger.debug('try to find session in db')        
     dynamodb = boto3.resource('dynamodb') 
     table = dynamodb.Table(config.DynamoDB_Table) 
 
@@ -127,19 +127,19 @@ def isValidSession(sessionId):
         now = time.time()
 
         if expiration_time - now < 0: 
-            logger.info("Session already expires.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
+            logger.debug("Session already expires.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
             return False, access_token  
         # expiring soon (in 5 minute), refresh token
         elif expiration_time - now < 300:  
-            logger.info("expiring in 5 minute, need to refresh token.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
+            logger.debug("expiring in 5 minute, need to refresh token.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
             current_refresh_token = resp['Item']['refresh_token']
             refresh_token(sessionId, current_refresh_token)
             return True, access_token
         else:
-            logger.info("Find valid session id db")
+            logger.debug("Find valid session id db")
             return True, access_token
     else:
-        logger.info("SessionId {} not found in db".format(sessionId))
+        logger.debug("SessionId {} not found in db".format(sessionId))
         return False
 
 def refresh_token(sessionId, current_refresh_token):
@@ -171,7 +171,7 @@ def refresh_token(sessionId, current_refresh_token):
         # update the time to live of this item
         ttl = int((datetime.now() + timedelta(days=1)).timestamp())
         dynamodb = boto3.resource('dynamodb') 
-        logger.info('update access token to dynamodb table %s', config.DynamoDB_Table)
+        logger.debug('update access token to dynamodb table %s', config.DynamoDB_Table)
         table = dynamodb.Table(config.DynamoDB_Table) 
         #inserting values into table 
         response = table.update_item(
@@ -185,6 +185,6 @@ def refresh_token(sessionId, current_refresh_token):
             }), parse_float=Decimal),
             ReturnValues="UPDATED_NEW"
         )
-        logger.info(response["Attributes"])
+        logger.debug(response["Attributes"])
 
 

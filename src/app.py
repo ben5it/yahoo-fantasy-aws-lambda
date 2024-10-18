@@ -8,11 +8,11 @@ import yahoo_oauth as yOauth
 
 def lambda_handler(event, context):
 
-    logger.info(event)
+    logger.debug(event)
     # print(context)
 
     path = event['rawPath']
-    logger.info('rawPath: %s', path)
+    logger.debug('rawPath: %s', path)
 
     if path =='/login':
         return yOauth.login()
@@ -22,10 +22,10 @@ def lambda_handler(event, context):
 
     # for routes other than login and callback, we need  session id
     sessionId = utils.getSessionIdFromCookies(event['cookies'])
-    logger.info('SessionId: %s', sessionId)
+    logger.debug('SessionId: %s', sessionId)
     valid, access_token = yOauth.isValidSession(sessionId)
     if valid == False:
-        logger.info('Invalid SessionId: %s, rediect to login page.', sessionId)
+        logger.debug('Invalid SessionId: %s, rediect to login page.', sessionId)
         return {
             "isBase64Encoded": False,
             "statusCode": 302,

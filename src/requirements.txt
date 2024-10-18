@@ -2,4 +2,6 @@ objectpath
 PyJWT
 pytz
 requests
-
+pandas
+scipy
+s3fs
