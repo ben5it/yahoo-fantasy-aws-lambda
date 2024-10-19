@@ -21,9 +21,28 @@
         },
         "querystring": "abc=def&qrs=tuv",
         "headers": {
-          "cookie": "sessionId=cb19bfa8-df6f-46de-b564-71b7d4bb3129; name2=value2; name3=value3"
+          "cookie": "sessionId=ca6c34ce-778a-46b5-b4ad-dc40ab7167d5; name2=value2; name3=value3"
         }
       }
-    }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "leauges",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "${workspaceFolder}/template.yaml",
+        "logicalId": "LamndaFunction"
+      },
+      "api": {
+        "path": "/api/leagues",
+        "httpMethod": "get",
+
+        "querystring": "abc=def&qrs=tuv",
+        "headers": {
+          "cookie": "sessionId=8c3b424d-cef1-4a0f-a3fa-bdcfdd989cc4; name2=value2; name3=value3"
+        }
+      }
+    }  
   ]
 }

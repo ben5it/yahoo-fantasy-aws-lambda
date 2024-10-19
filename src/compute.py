@@ -1,6 +1,5 @@
-#-*- coding: utf-8 -*-
+#!/usr/bin/env python
 
-# from audioop import reverse
 import pandas as pd
 from pandas import DataFrame
 from scipy.stats import rankdata
@@ -26,13 +25,12 @@ def data_to_ranking_score(values, reverse = False):
 
 def stat_to_score(stat_df, sort_orders):
     '''Give then stats of a league for a week or the whole season, compute the ranking score
+       sort_orders: {'FG%': '1', 'FT%': '1', '3PTM': '1', 'PTS': '1', 'OREB': '1', 'REB': '1', 'AST': '1', 'ST': '1', 'BLK': '1', 'TO': '0', 'A/T': '1'}
     '''
     score_df = stat_df.copy()
 
-    idx = 0
     for (stat_name, stat_value) in stat_df.items():
-        sort_order = sort_orders[idx]
-        idx += 1
+        sort_order = sort_orders[stat_name]
 
         reverse = (sort_order == '0')
         scores = data_to_ranking_score(stat_value.values, reverse)

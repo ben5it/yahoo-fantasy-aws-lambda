@@ -1,11 +1,12 @@
-import boto3
-import json
-import os
+#!/usr/bin/env python
+
+# import json
+# import os
 import datetime
-from scipy.stats import rankdata
-from io import StringIO
-import pandas as pd
-import config
+import s3_operation as s3op
+import datetime
+import pytz
+# import config
 from config import logger
 
 def getSessionIdFromCookies(cookies):
@@ -31,73 +32,26 @@ def getDefaultSeason():
     return season
 
 
-def load_json_from_s3(file_key, bucket_name = None):
+def getPredictWeek(league_id):
+    season = getDefaultSeason()
+    league_info_file_key = f"data/{season}/{league_id}/league_info.json"
+    league_info = s3op.load_json_from_s3(league_info_file_key)
 
-    if bucket_name is None:
-        bucket_name = config.S3_Bucket
-        
-    logger.debug(f"Try to get file {file_key} from s3 bucket {bucket_name}.")
-    s3 = boto3.resource('s3')
-     
-    try:
-        obj = s3.Object(bucket_name, file_key)
-        body = obj.get()['Body'].read().decode('utf-8')
-        json_content = json.loads(body)
-        logger.debug(f"Successfully't get object {file_key} from bucket {bucket_name}.")
-        logger.debug(json_content)
-        return json_content
+    current_week = int(league_info['current_week'])
+    end_week = int(league_info['end_week'])
+    today = datetime.datetime.now(pytz.timezone('US/Pacific')).date()
+    weekday = today.weekday()
 
-    except Exception as e:
-        logger.debug(f"Couldn't get object {file_key} from bucket {bucket_name}.")
-        logger.debug(e)
-        return None
+    predict_week = current_week + 1
+    # if it is Monday, set predict week to current week
+    # because this is used for research the matchup
+    if weekday < 1:
+        predict_week -= 1
+    if predict_week > end_week:
+        predict_week = end_week
 
-def write_json_to_s3(json_data, file_key, bucket_name = None):
-
-    if bucket_name is None:
-        bucket_name = config.S3_Bucket
-        
-    logger.debug(f"Try to save file {file_key} to s3 bucket {bucket_name}.")
-    
-    s3 = boto3.resource('s3')  
-    
-    try:
-        json_content = json.dumps(json_data, ensure_ascii=False, indent=4)
-        s3.Object(bucket_name, file_key).put(Body=json_content, ContentType='application/json')
-        logger.debug(f"Successfully saved JSON to {bucket_name}/{file_key}")
-    except Exception as e:
-        logger.debug(f"An error occurred: {e}")
-
-
-def load_dataframe_from_csv_on_s3(file_key, bucket_name = None):
-    if bucket_name is None:
-        bucket_name = config.S3_Bucket
-
-    logger.debug(f"Try to load csv file {file_key} from s3 bucket {bucket_name}.")
-
-    s3 = boto3.resource('s3')   
-    try:
-        obj = s3.Object(bucket_name, file_key)
-        csv_string = obj.get()['Body'].read().decode('utf-8')
-        df = pd.read_csv(StringIO(csv_string))
-        return df
-
-    except Exception as e:
-        logger.debug(f"Couldn't get object {file_key} from bucket {bucket_name}.")
-        logger.debug(e)
-        return None    
-
-def write_dataframe_to_csv_on_s3(df, file_key, bucket_name = None):
-    if bucket_name is None:
-        bucket_name = config.S3_Bucket
-
-    file_path = f"s3://{bucket_name}/{file_key}"
-   
-    try:
-        df.to_csv(file_path, encoding='utf_8_sig', index=True, index_label='Team')
-        logger.debug(f"Successfully saved dataframe to {file_path}")
-    except Exception as e:
-        logger.debug(f"An error occurred when writing dataframe to {file_path}: {e}")
+    return 2
+    return predict_week
     
 # def isDataUpToDate(league_id, week):
 #     s3 = boto3.client('s3')
