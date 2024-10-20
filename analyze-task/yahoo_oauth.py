@@ -96,8 +96,8 @@ def callback(queryString):
             logger.debug(data)
             ddb_data = json.loads(json.dumps(data), parse_float=Decimal)
             dynamodb = boto3.resource('dynamodb') 
-            logger.debug('DynamoDB_Table： %s', config.DynamoDB_Table)
-            table = dynamodb.Table(config.DynamoDB_Table) 
+            logger.debug('DB_Session_Table： %s', config.DB_Session_Table)
+            table = dynamodb.Table(config.DB_Session_Table) 
             #inserting values into table 
             response = table.put_item(Item = ddb_data) 
             
@@ -118,7 +118,7 @@ def isValidSession(sessionId):
 
     logger.debug('try to find session in db')        
     dynamodb = boto3.resource('dynamodb') 
-    table = dynamodb.Table(config.DynamoDB_Table) 
+    table = dynamodb.Table(config.DB_Session_Table) 
 
     resp  = table.get_item(Key={"sessionId": sessionId})
     if 'Item' in resp:
@@ -173,8 +173,8 @@ def refresh_token(sessionId, current_refresh_token):
         # update the time to live of this item
         ttl = int((datetime.now() + timedelta(days=1)).timestamp())
         dynamodb = boto3.resource('dynamodb') 
-        logger.debug('update access token to dynamodb table %s', config.DynamoDB_Table)
-        table = dynamodb.Table(config.DynamoDB_Table) 
+        logger.debug('update access token to dynamodb table %s', config.DB_Session_Table)
+        table = dynamodb.Table(config.DB_Session_Table) 
         #inserting values into table 
         response = table.update_item(
             Key={'sessionId': sessionId},

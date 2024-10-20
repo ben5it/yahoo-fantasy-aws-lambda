@@ -6,7 +6,7 @@ import logging
 Client_ID = os.environ.get('CLIENT_ID')
 Client_Secrect = os.environ.get('CLIENT_SECRET')
 
-DynamoDB_Table = os.environ.get("DB_TABLE_NAME")
+DB_Session_Table = os.environ.get("DB_SESSION_TABLE")
 S3_Bucket = os.environ.get("S3_BUCKET_NAME")
 
 BASE_URL = os.environ.get('BASE_URL')

@@ -90,13 +90,13 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${ProjectName}"
       RetentionInDays: 1
 
-  LamndaFunction:
+  WebServerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: src/
+      CodeUri: web-server/
       Handler: app.lambda_handler
       Runtime: python3.11
-      FunctionName: !Ref ProjectName
+      FunctionName: !Sub ${ProjectName}-web-server
       Architectures:
         - x86_64
       Events:
@@ -120,26 +120,71 @@ Resources:
           Properties:
             Path: /api/analyze
             Method: post
+        PollingApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /api/polling
+            Method: post
       Environment:
         Variables:
           CLIENT_ID:  !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
-          DB_TABLE_NAME: !Ref ProjectName
+          DB_SESSION_TABLE: !Sub ${ProjectName}-session
+          DB_TASK_TABLE: !Sub ${ProjectName}-task
           S3_BUCKET_NAME: !Ref DomainName
           BASE_URL: !Sub https://${DomainName}
       Role: !GetAtt LambdaExecRole.Arn
-  DynamoDBTable:
+  AnalyzeTaskFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      PackageType: Image
+      FunctionName:  !Sub ${ProjectName}-analyze-task
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          CLIENT_ID:  !Ref ClientId
+          CLIENT_SECRET: !Ref ClientSecret
+          DB_SESSION_TABLE: !Sub ${ProjectName}-session
+          DB_TASK_TABLE: !Sub ${ProjectName}-task
+          S3_BUCKET_NAME: !Ref DomainName
+          BASE_URL: !Sub https://${DomainName}
+      Role: !GetAtt LambdaExecRole.Arn
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./analyze-task
+      DockerTag: python3.11-v1
+  SessionTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: "Retain"
     DeletionPolicy: Delete
     Properties:
-      TableName: !Ref ProjectName
+      TableName: !Sub ${ProjectName}-session
       AttributeDefinitions:
         - AttributeType: "S"
           AttributeName: "sessionId"
       KeySchema:
         - KeyType: "HASH"
           AttributeName: "sessionId"
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: "expireAt"
+  TaskTable:
+    Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: "Retain"
+    DeletionPolicy: Delete
+    Properties:
+      TableName: !Sub ${ProjectName}-task
+      AttributeDefinitions:
+        - AttributeType: "S"
+          AttributeName: "taskId"
+      KeySchema:
+        - KeyType: "HASH"
+          AttributeName: "taskId"
       BillingMode: PROVISIONED
       ProvisionedThroughput:
         ReadCapacityUnits: 1
