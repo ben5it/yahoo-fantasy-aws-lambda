@@ -90,13 +90,23 @@ Resources:
       LogGroupName: !Sub "/aws/lambda/${ProjectName}"
       RetentionInDays: 1
 
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: SharedLayer
+      Description: Shared code for both Lambda functions
+      ContentUri: shared/
+      CompatibleRuntimes:
+        - python3.11
   WebServerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: web-server/
+      CodeUri: web_server/
       Handler: app.lambda_handler
       Runtime: python3.11
       FunctionName: !Sub ${ProjectName}-web-server
+      Layers:
+        - !Ref SharedLayer
       Architectures:
         - x86_64
       Events:
@@ -134,11 +144,13 @@ Resources:
           S3_BUCKET_NAME: !Ref DomainName
           BASE_URL: !Sub https://${DomainName}
       Role: !GetAtt LambdaExecRole.Arn
-  AnalyzeTaskFunction:
+  LongRunningJobFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       PackageType: Image
-      FunctionName:  !Sub ${ProjectName}-analyze-task
+      FunctionName:  !Sub ${ProjectName}-analysi-task
+      Layers:
+        - !Ref SharedLayer
       Architectures:
         - x86_64
       Environment:

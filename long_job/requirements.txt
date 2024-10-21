@@ -1,5 +1,4 @@
 objectpath
-PyJWT
 pytz
 requests
 pandas

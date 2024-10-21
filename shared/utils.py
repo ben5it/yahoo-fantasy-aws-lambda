@@ -1,0 +1,137 @@
+#!/usr/bin/env python
+
+import datetime
+import json
+import os
+import pytz
+
+import config
+from config import logger
+
+
+def get_season():
+    today = datetime.date.today()
+    season = today.year
+    if today.month < 10 or (today.month == 10 and today.day < 25): # nba season usually starts at the end of Oct
+        season -= 1   
+    
+    return season
+
+
+def get_prediction_week(league_id):
+    season = get_season()
+    league_info_file_key = f"data/{season}/{league_id}/league_info.json"
+    league_info = s3op.load_json_from_s3(league_info_file_key)
+
+    current_week = int(league_info['current_week'])
+    end_week = int(league_info['end_week'])
+    today = datetime.datetime.now(pytz.timezone('US/Pacific')).date()
+    weekday = today.weekday()
+
+    predict_week = current_week + 1
+    # if it is Monday, set predict week to current week
+    # because this is used for research the matchup
+    if weekday < 1:
+        predict_week -= 1
+    if predict_week > end_week:
+        predict_week = end_week
+
+    return 2
+    return predict_week
+
+def get_task_id(league_id, week):
+    season = get_season()
+    return f"task_{season}_{league_id:08d}_{week:02d}"
+
+
+def get_access_token_from_db(sessionId):
+    dynamodb = boto3.resource('dynamodb') 
+    table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 
+
+    resp  = table.get_item(Key={"sessionId": sessionId})
+    if 'Item' in resp:
+        return resp['Item']['access_token']
+    else:
+        return None
+
+
+
+def is_valid_session(sessionId):
+    
+    if sessionId is None or sessionId == '':
+        return False, None
+
+    logger.debug('try to find session in db')        
+    dynamodb = boto3.resource('dynamodb') 
+    table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 
+
+    resp  = table.get_item(Key={"sessionId": sessionId})
+    if 'Item' in resp:
+        expiration_time = float(resp['Item']['expiration_time'])
+        userId = resp['Item']['userId']
+        access_token = resp['Item']['access_token']
+
+        now = time.time()
+
+        if expiration_time - now < 0: 
+            logger.debug("Session already expires.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
+            return False, access_token  
+        # expiring soon (in 5 minute), refresh token
+        elif expiration_time - now < 300:  
+            logger.debug("expiring in 5 minute, need to refresh token.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
+            current_refresh_token = resp['Item']['refresh_token']
+            refresh_token(sessionId, current_refresh_token)
+            return True, access_token
+        else:
+            logger.debug("Find valid session id db")
+            return True, access_token
+    else:
+        logger.debug("SessionId {} not found in db".format(sessionId))
+        return False
+
+def refresh_token(sessionId, current_refresh_token):
+    encoded_credentials = base64.b64encode(('{0}:{1}'.format(os.environ.get('CLIENT_ID'), os.environ.get('CLIENT_SECRET'))).encode('utf-8'))
+
+    headers = {
+        'Authorization': 'Basic {0}'.format(encoded_credentials.decode('utf-8')),
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    data =  {
+        "refresh_token": current_refresh_token,
+        "grant_type": "refresh_token",
+        "redirect_uri": os.environ.get('BASE_URL') + "/callback"
+    }
+
+    raw_token = requests.post(config.ACCESS_TOKEN_URL, data=data, headers = headers)
+    parsed_token = raw_token.json()
+    logger.debug(parsed_token)
+    if 'error' in parsed_token:
+        return {
+            'statusCode': 401,
+            'body': parsed_token['error_description']
+        }
+    else:
+        access_token = parsed_token["access_token"]
+        refresh_token = parsed_token["refresh_token"]
+        expiration_time = time.time() + parsed_token["expires_in"]
+
+        # update the time to live of this item
+        ttl = int((datetime.now() + timedelta(days=1)).timestamp())
+        dynamodb = boto3.resource('dynamodb') 
+        logger.debug('update access token to dynamodb table %s', os.environ.get("DB_SESSION_TABLE"))
+        table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 
+        #inserting values into table 
+        response = table.update_item(
+            Key={'sessionId': sessionId},
+            UpdateExpression='SET access_token=:val1, refresh_token=:val2, expiration_time=:val3, expireAt=:val4',
+            ExpressionAttributeValues =json.loads(json.dumps({
+                ':val1':  access_token,
+                ':val2':  refresh_token,
+                ':val3':  expiration_time,
+                ':val4': ttl
+            }), parse_float=Decimal),
+            ReturnValues="UPDATED_NEW"
+        )
+        logger.debug(response["Attributes"])
+
+

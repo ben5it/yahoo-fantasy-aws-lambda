@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
 from io import BytesIO
-import base64
-import matplotlib.pyplot as plt
+# import base64
 import numpy as np
 
-import config
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import font_manager
-cnFontProp = font_manager.FontProperties(fname=config.CHINESE_FONT_FILE)
+cnFontProp = font_manager.FontProperties(fname='SimSun-01.ttf')
+import matplotlib.pyplot as plt
 
 def league_bar_chart(df, title):
     '''Generate a bar chart displaying the total score of each team
@@ -59,14 +58,14 @@ def league_bar_chart(df, title):
     # plt.legend(['Total', 'Week '+ str(week)], loc='upper right')
     plt.grid(linestyle='--', linewidth=1, axis='y', alpha=0.7)
 
-    figfile = BytesIO()
-    plt.savefig(figfile, format='png')
-    figfile.seek(0)  # rewind to beginning of file
-    figdata_png = base64.b64encode(figfile.getvalue())
-    figdata_png = figdata_png.decode('utf8')
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png')
+    img_data.seek(0)  # rewind to beginning of file
+    # figdata_png = base64.b64encode(img_data.getvalue())
+    # figdata_png = figdata_png.decode('utf8')
     plt.close()
 
-    return figdata_png
+    return img_data
 
 def league_radar_charts(week_df, total_df, week):
     charts = []
