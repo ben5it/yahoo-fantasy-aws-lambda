@@ -1,8 +1,0 @@
-objectpath
-pytz
-requests
-pandas
-scipy
-s3fs
-boto3
-matplotlib

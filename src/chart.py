@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from io import BytesIO
-# import base64
 import numpy as np
 
 import matplotlib

@@ -1,9 +1,9 @@
+boto3
 objectpath
+pandas
 PyJWT
 pytz
 requests
-pandas
-scipy
 s3fs
-boto3
-matplotlib
+debugpy
+

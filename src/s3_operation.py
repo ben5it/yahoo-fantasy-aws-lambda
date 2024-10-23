@@ -6,7 +6,9 @@ import json
 import os
 import pandas as pd
 
-from config import logger
+import config as cfg
+
+logger = cfg.logger
 
 def load_json_from_s3(file_key):
 

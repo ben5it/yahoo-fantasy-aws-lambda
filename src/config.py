@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 # yahoo urls
 AUTHORIZE_URL="https://api.login.yahoo.com/oauth2/request_auth"
@@ -14,6 +17,4 @@ FANTASY_API_URL = "https://fantasysports.yahooapis.com/fantasy/v2"
 # CHINESE_FONT_FILE = os.path.join(PROJECT_ROOT, 'SimSun-01.ttf')
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 

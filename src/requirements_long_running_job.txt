@@ -1,0 +1,9 @@
+boto3
+matplotlib
+numpy
+objectpath
+pandas
+pytz
+requests
+s3fs
+debugpy

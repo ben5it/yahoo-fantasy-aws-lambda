@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 
-from pandas import DataFrame
 import json
 import objectpath
 import pandas as pd
 import requests
 
-import utils
+
+import config as cfg
 import s3_operation as s3op
-import config
-from config import logger
+import utils
+
+logger = cfg.logger
+
 
 ACCESS_TOKEN = ''
 
@@ -237,7 +239,7 @@ def make_request(path):
     :return: JSON document of the response
     :raises: RuntimeError if any response comes back with an error
     """
-    url = f'{config.FANTASY_API_URL}/{path}'
+    url = f'{cfg.FANTASY_API_URL}/{path}'
     logger.debug(f'request url: {url}')
 
     headers = {

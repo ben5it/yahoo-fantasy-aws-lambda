@@ -1,11 +1,29 @@
 #!/usr/bin/env python
 
 import pandas as pd
-from pandas import DataFrame
-from scipy.stats import rankdata
 import numpy as np
 
-
+def rankdata(a):
+    """
+    Assign ranks to data, dealing with ties appropriately.
+    
+    Parameters
+    ----------
+    a : array_like
+        The array of values to be ranked.
+    
+    Returns
+    -------
+    ranks : ndarray
+        An array of ranks, the same shape as `a`.
+    """
+    a = np.asarray(a)
+    sorter = np.argsort(a)
+    inv = np.empty_like(sorter)
+    inv[sorter] = np.arange(len(a))
+    ranks = np.empty_like(a, dtype=float)
+    ranks[sorter] = np.arange(1, len(a) + 1)
+    return ranks
 
 def data_to_ranking_score(values, reverse = False):
     '''

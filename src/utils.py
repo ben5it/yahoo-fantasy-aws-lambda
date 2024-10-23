@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 
+from decimal import Decimal
+import base64
+import boto3
 import datetime
 import json
 import os
 import pytz
+import requests
+import time
+import config as cfg
+import s3_operation as s3op
 
-import config
-from config import logger
+logger = cfg.logger
+
 
 
 def get_season():
@@ -36,7 +43,6 @@ def get_prediction_week(league_id):
     if predict_week > end_week:
         predict_week = end_week
 
-    return 2
     return predict_week
 
 def get_task_id(league_id, week):
@@ -87,7 +93,7 @@ def is_valid_session(sessionId):
             return True, access_token
     else:
         logger.debug("SessionId {} not found in db".format(sessionId))
-        return False
+        return False, None
 
 def refresh_token(sessionId, current_refresh_token):
     encoded_credentials = base64.b64encode(('{0}:{1}'.format(os.environ.get('CLIENT_ID'), os.environ.get('CLIENT_SECRET'))).encode('utf-8'))
@@ -102,7 +108,7 @@ def refresh_token(sessionId, current_refresh_token):
         "redirect_uri": os.environ.get('BASE_URL') + "/callback"
     }
 
-    raw_token = requests.post(config.ACCESS_TOKEN_URL, data=data, headers = headers)
+    raw_token = requests.post(cfg.ACCESS_TOKEN_URL, data=data, headers = headers)
     parsed_token = raw_token.json()
     logger.debug(parsed_token)
     if 'error' in parsed_token:
@@ -116,7 +122,7 @@ def refresh_token(sessionId, current_refresh_token):
         expiration_time = time.time() + parsed_token["expires_in"]
 
         # update the time to live of this item
-        ttl = int((datetime.now() + timedelta(days=1)).timestamp())
+        ttl = int((datetime.now() + datetime.timedelta(days=1)).timestamp())
         dynamodb = boto3.resource('dynamodb') 
         logger.debug('update access token to dynamodb table %s', os.environ.get("DB_SESSION_TABLE"))
         table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 

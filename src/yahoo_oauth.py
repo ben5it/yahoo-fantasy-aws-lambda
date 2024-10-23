@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
-import json
-import requests
-from urllib.parse import urlencode, quote, parse_qs
-
-import base64
-import jwt
-import time
 from datetime import datetime, timedelta
-import uuid
-import boto3
 from decimal import Decimal
-import config
+from urllib.parse import urlencode, quote, parse_qs
+import base64
+import boto3
+import json
+import jwt
+import os
+import requests
+import time
+import uuid
+import config as cfg
 
-from config import logger
+
+logger = cfg.logger
+
 
 def login():
     data = { 
@@ -22,7 +24,7 @@ def login():
         'redirect_uri' : os.environ.get('BASE_URL') + "/callback", 
         'scope': "openid"
     }
-    login_url  = config.AUTHORIZE_URL + '?' + urlencode(data, quote_via=quote)
+    login_url  = cfg.AUTHORIZE_URL + '?' + urlencode(data, quote_via=quote)
     logger.debug('Login URL： %s', login_url)
     return {
         "isBase64Encoded": False,
@@ -60,7 +62,7 @@ def callback(queryString):
             "redirect_uri": os.environ.get('BASE_URL') + "/callback"
         }
     
-        raw_token = requests.post(config.ACCESS_TOKEN_URL, data=data, headers = headers)
+        raw_token = requests.post(cfg.ACCESS_TOKEN_URL, data=data, headers = headers)
         parsed_token = raw_token.json()
         logger.debug(parsed_token)
         if 'error' in parsed_token:

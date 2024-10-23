@@ -5,21 +5,24 @@ import os
 import boto3
 import time
 
-import shared.config as logger
-import shared.fantasy_api as fapi
-import shared.utils as utils
+
+import utils
+import fantasy_api as fapi
+import config as cfg
+
+logger = cfg.logger
 
 import yahoo_oauth as yOauth
 
 def lambda_handler(event, context):
 
     logger.debug(event)
-    logger.debug(context)
+    # logger.debug(context)
 
     path = event['rawPath']
     logger.debug('rawPath: %s', path)
 
-    sessionId = utils.get_session_id_from_cookies(event['cookies'])
+    sessionId = get_session_id_from_cookies(event)
     logger.debug('SessionId: %s', sessionId)
     valid, access_token = utils.is_valid_session(sessionId)
 
@@ -138,10 +141,11 @@ def lambda_handler(event, context):
 
 
 def  run_analysis(parms):
+
     lambda_client = boto3.client('lambda')
-    client.invoke(
-        FunctionName = 'LongRunningJobFunction',
-        InvocationType = 'Event'  # Asynchronous invocation,
+    lambda_client.invoke(
+        FunctionName = 'yahoo-fantasy-task',
+        InvocationType = 'Event',  # Asynchronous invocation,
         Payload = parms
     )
 
@@ -151,14 +155,16 @@ def  run_analysis(parms):
     }
       
 
-def get_session_id_from_cookies(cookies):
+def get_session_id_from_cookies(event):
     
     sessionId = None
-    for cookie in cookies:
-        pair = cookie.split('=')
-        key = pair[0]
-        if key == 'sessionId':
-            sessionId = pair[1]
-            break
+
+    if 'cookies' in event:
+        for cookie in event['cookies']:
+            pair = cookie.split('=')
+            key = pair[0]
+            if key == 'sessionId':
+                sessionId = pair[1]
+                break
 
     return sessionId
