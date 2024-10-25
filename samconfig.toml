@@ -21,7 +21,7 @@ resolve_s3 = true
 s3_prefix = "yahoo-fantasy"
 region = "us-east-1"
 image_repositories = ["WebServerFunction=711387121254.dkr.ecr.us-east-1.amazonaws.com/yahoofantasyd3915317/webserverfunction119ea898repo", "LongRunningJobFunction=711387121254.dkr.ecr.us-east-1.amazonaws.com/yahoofantasyd3915317/longrunningjobfunctionc27544f8repo"]
-parameter_overrides = "ProjectName=\"yahoo-fantasy\" ClientId=\"dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw\" ClientSecret=\"b387ea999b6615b308c8a67fd3ea70f778e8703a\" DomainName=\"fantasy.laohuang.org\" SSLCertificateArn=\"arn:aws:acm:us-east-1:711387121254:certificate/2e1c3799-2a39-4d43-906d-6fd5824344f7\""
+parameter_overrides = "ClientId=\"dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw\" ClientSecret=\"b387ea999b6615b308c8a67fd3ea70f778e8703a\" AlternateDomainName=\"fantasy.laohuang.org\" SSLCertificateArn=\"arn:aws:acm:us-east-1:711387121254:certificate/2e1c3799-2a39-4d43-906d-6fd5824344f7\" HostedZoneId=\"Z00026602M1LG268PQ0LG\""
 
 [default.package.parameters]
 resolve_s3 = true

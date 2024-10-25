@@ -144,7 +144,7 @@ def  run_analysis(parms):
 
     lambda_client = boto3.client('lambda')
     lambda_client.invoke(
-        FunctionName = 'yahoo-fantasy-task',
+        FunctionName = os.environ.get('TASK_JOB_FUNCTION_NAME'),
         InvocationType = 'Event',  # Asynchronous invocation,
         Payload = parms
     )
