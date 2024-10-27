@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+from datetime import datetime, timedelta, date
 from decimal import Decimal
 import base64
 import boto3
-import datetime
 import json
 import os
 import pytz
@@ -17,7 +17,7 @@ logger = cfg.logger
 
 
 def get_season():
-    today = datetime.date.today()
+    today =date.today()
     season = today.year
     if today.month < 10 or (today.month == 10 and today.day < 25): # nba season usually starts at the end of Oct
         season -= 1   
@@ -27,12 +27,12 @@ def get_season():
 
 def get_prediction_week(league_id):
     season = get_season()
-    league_info_file_key = f"data/{season}/{league_id}/league_info.json"
+    league_info_file_key = f"{season}/{league_id}/league_info.json"
     league_info = s3op.load_json_from_s3(league_info_file_key)
 
     current_week = int(league_info['current_week'])
     end_week = int(league_info['end_week'])
-    today = datetime.datetime.now(pytz.timezone('US/Pacific')).date()
+    today = datetime.now(pytz.timezone('US/Pacific')).date()
     weekday = today.weekday()
 
     predict_week = current_week + 1
@@ -44,6 +44,12 @@ def get_prediction_week(league_id):
         predict_week = end_week
 
     return predict_week
+
+def get_league_info(league_id):
+    season = get_season()
+    league_info_file_key = f"{season}/{league_id}/league_info.json"
+    league_info = s3op.load_json_from_s3(league_info_file_key)
+    return league_info
 
 def get_task_id(league_id, week):
     season = get_season()
@@ -77,7 +83,7 @@ def is_valid_session(sessionId):
         userId = resp['Item']['userId']
         access_token = resp['Item']['access_token']
 
-        now = time.time()
+        now = int(time.time())
 
         if expiration_time - now < 0: 
             logger.debug("Session already expires.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
@@ -122,7 +128,7 @@ def refresh_token(sessionId, current_refresh_token):
         expiration_time = time.time() + parsed_token["expires_in"]
 
         # update the time to live of this item
-        ttl = int((datetime.now() + datetime.timedelta(days=1)).timestamp())
+        ttl = int((datetime.now() + timedelta(days=1)).timestamp())
         dynamodb = boto3.resource('dynamodb') 
         logger.debug('update access token to dynamodb table %s', os.environ.get("DB_SESSION_TABLE"))
         table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 

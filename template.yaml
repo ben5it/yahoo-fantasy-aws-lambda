@@ -9,14 +9,18 @@ Globals:
     Timeout: 3
 
 Parameters:
+  ProjectName:
+    Type: String
+    Description: the project name
+    Default: yahoo-fantasy
   ClientId:
     Type: String
     Description: the yahoo applicaiton client id
-    Default: id
+    Default: dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw
   ClientSecret:
     Type: String
     Description: the yahoo applicaiton client secrect
-    Default: secrect
+    Default: b387ea999b6615b308c8a67fd3ea70f778e8703a
   AlternateDomainName:
     Type: String
     Description: The alternate domain name for the CloudFront distribution
@@ -31,23 +35,40 @@ Parameters:
     Default: Z00026602M1LG268PQ0LG
 
 Resources:
-  StaticWebsiteBucket:
+  WebsiteBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      BucketName: !Sub '${AWS::StackName}-static-website'
+      BucketName: !Sub '${ProjectName}-website'
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
-        IgnorePublicAcls: true
         BlockPublicPolicy: true
+        IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  StaticWebsiteBucketPolicy:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub '${ProjectName}-data'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref 'StaticWebsiteBucket'
+      Bucket: !Ref 'WebsiteBucket'
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -55,7 +76,23 @@ Resources:
             Principal:
               Service: cloudfront.amazonaws.com
             Action: 's3:GetObject'
-            Resource: !Sub 'arn:aws:s3:::${StaticWebsiteBucket}/*'
+            Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}/*'
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
+
+  DataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref 'DataBucket'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${DataBucket}/*'
             Condition:
               StringEquals:
                 'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
@@ -65,16 +102,25 @@ Resources:
     Properties:
       StageName: $default
 
-  CloudFrontOriginAccessControl:
+  WebSiteBucketOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Description: Access Control for S3 Origin
-        Name: !Sub '${AWS::StackName}-s3-origin-access-control'
+        Description: Access Control for Static Website S3 Origin
+        Name: !Sub "${ProjectName}-website-oac"
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  DataBucketOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Access Control for Data S3 Origin
+        Name: !Sub "${ProjectName}-data-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
 
 
   CloudFrontDistribution:
@@ -82,9 +128,13 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - Id: S3Origin
-            DomainName: !GetAtt 'StaticWebsiteBucket.RegionalDomainName'
-            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+          - Id: S3WebSiteOrigin
+            DomainName: !GetAtt 'WebsiteBucket.RegionalDomainName'
+            OriginAccessControlId: !GetAtt WebSiteBucketOriginAccessControl.Id
+            S3OriginConfig: {}
+          - Id: S3DataOrigin
+            DomainName: !GetAtt 'DataBucket.RegionalDomainName'
+            OriginAccessControlId: !GetAtt DataBucketOriginAccessControl.Id
             S3OriginConfig: {}
           - Id: ApiGatewayOrigin
             DomainName: !Sub '${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com'
@@ -93,7 +143,7 @@ Resources:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
         DefaultCacheBehavior:
-          TargetOriginId: S3Origin
+          TargetOriginId: S3WebSiteOrigin
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods:
             - GET
@@ -106,6 +156,19 @@ Resources:
             Cookies:
               Forward: none
         CacheBehaviors:
+          - PathPattern: '/data/*'
+            TargetOriginId: S3DataOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
           - PathPattern: '/api/*'
             TargetOriginId: ApiGatewayOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -231,13 +294,8 @@ Resources:
               -
                 Effect: Allow
                 Action:
-                  - 's3:ListBucket'
-                Resource: !Sub 'arn:aws:s3:::${StaticWebsiteBucket}'
-              -
-                Effect: Allow
-                Action:
                   - 's3:*'
-                Resource: !Sub 'arn:aws:s3:::${StaticWebsiteBucket}/data/*'
+                Resource: !Sub 'arn:aws:s3:::${DataBucket}/*'
         - PolicyName: 'LambdaInvokeFunction' # allow lambda functions to invoke other lambda functions
           PolicyDocument:
             Version: '2012-10-17'
@@ -251,12 +309,12 @@ Resources:
   WebServerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-web-server'
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-web-server'
       RetentionInDays: 1
   LongRunningJobLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-task'
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-task'
       RetentionInDays: 1
 
   
@@ -265,7 +323,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       PackageType: Image
-      FunctionName: !Sub ${AWS::StackName}-web-server
+      FunctionName: !Sub ${ProjectName}-web-server
       Architectures:
         - x86_64
       Events:
@@ -279,37 +337,37 @@ Resources:
         Variables:
           CLIENT_ID:  !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
-          DB_SESSION_TABLE: !Sub ${AWS::StackName}-session
-          DB_TASK_TABLE: !Sub ${AWS::StackName}-task
-          S3_BUCKET_NAME: !Ref StaticWebsiteBucket
+          DB_SESSION_TABLE: !Sub ${ProjectName}-session
+          DB_TASK_TABLE: !Sub ${ProjectName}-task
+          DATA_BUCKET_NAME: !Ref DataBucket
           TASK_JOB_FUNCTION_NAME: !Ref LongRunningJobFunction
           BASE_URL: !Sub https://${AlternateDomainName}
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_web_server
       DockerContext: ./src/
-      DockerTag: !Sub ${AWS::StackName}-web-server
+      DockerTag: !Sub ${ProjectName}-web-server
   
   LongRunningJobFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       PackageType: Image
-      FunctionName:  !Sub ${AWS::StackName}-task
+      FunctionName:  !Sub ${ProjectName}-task
       Architectures:
         - x86_64
       Environment:
         Variables:
           CLIENT_ID:  !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
-          DB_SESSION_TABLE: !Sub ${AWS::StackName}-session
-          DB_TASK_TABLE: !Sub ${AWS::StackName}-task
-          S3_BUCKET_NAME: !Ref StaticWebsiteBucket
+          DB_SESSION_TABLE: !Sub ${ProjectName}-session
+          DB_TASK_TABLE: !Sub ${ProjectName}-task
+          DATA_BUCKET_NAME: !Ref DataBucket
           BASE_URL: !Sub https://${AlternateDomainName}
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_long_running_job
       DockerContext: ./src/
-      DockerTag: !Sub ${AWS::StackName}-task
+      DockerTag: !Sub ${ProjectName}-task
 
   # dynamodb tables
   UserSessionTable:
@@ -317,7 +375,7 @@ Resources:
     UpdateReplacePolicy: 'Retain'
     DeletionPolicy: Delete
     Properties:
-      TableName: !Sub '${AWS::StackName}-session'
+      TableName: !Sub '${ProjectName}-session'
       AttributeDefinitions:
         - AttributeType: 'S'
           AttributeName: 'sessionId'
@@ -337,7 +395,7 @@ Resources:
     UpdateReplacePolicy: 'Retain'
     DeletionPolicy: Delete
     Properties:
-      TableName: !Sub '${AWS::StackName}-task'
+      TableName: !Sub '${ProjectName}-task'
       AttributeDefinitions:
         - AttributeType: 'S'
           AttributeName: 'taskId'
@@ -352,15 +410,3 @@ Resources:
         Enabled: true
         AttributeName: 'expireAt'
 
-Outputs:
-  CloudFrontDistributionDomainName:
-    Description: 'The domain name of the CloudFront distribution'
-    Value: !GetAtt CloudFrontDistribution.DomainName
-
-  StaticWebsiteBucketName:
-    Description: 'The name of the S3 bucket hosting the static website'
-    Value: !Ref StaticWebsiteBucket
-
-  ApiGatewayInvokeURL:
-    Description: 'The URL to invoke the API Gateway'
-    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/'

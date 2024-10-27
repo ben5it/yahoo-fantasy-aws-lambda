@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-
+from datetime import datetime, timedelta
+import boto3
+import json
+import os
 
 import chart as chart
 import compute as cmpt
@@ -31,13 +34,14 @@ def lambda_handler(event, context):
     if 'league_key' not in event or 'league_id' not in event or 'week' not in event :
         logger.error('Invalid input: league_key, league_id or week is missing')
         return
+    
 
     league_key = event['league_key']
-    league_id = event['league_id']
+    league_id = int(event['league_id'])
     week = int(event['week'])
 
     task_id = utils.get_task_id(league_id, week)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 0 })
+    update_status(task_id, { "status": 'INITIATED' })
    
     game_stat_categories = fapi.get_game_stat_categories()
     teams = fapi.get_league_teams(league_key, league_id)
@@ -55,43 +59,68 @@ def lambda_handler(event, context):
 
     # write to S3
     season = utils.get_season()
-    total_stats_csv_file_key = f"data/{season}/{league_id}/0/stats.csv"
-    total_score_csv_file_key = f"data/{season}/{league_id}/0/roto-score.csv"
-    week_stats_csv_file_key = f"data/{season}/{league_id}/{week}/stats.csv"
-    week_score_csv_file_key = f"data/{season}/{league_id}/{week}/roto-score.csv"
-    week_battle_csv_file_key = f"data/{season}/{league_id}/{week}/battle-score.csv"
+    total_stats_csv_file_key = f"{season}/{league_id}/0/stats.csv"
+    total_score_csv_file_key = f"{season}/{league_id}/0/roto-score.csv"
+    week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
+    week_score_csv_file_key = f"{season}/{league_id}/{week}/roto-score.csv"
+    week_battle_csv_file_key = f"{season}/{league_id}/{week}/battle-score.csv"
 
     s3op.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(total_score, total_score_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(week_score, week_score_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(battle_score, week_battle_csv_file_key)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 40 })
+    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 35 })
 
     predict_week = utils.get_prediction_week(league_id)
     next_matchups = fapi.get_league_matchup(team_keys, predict_week)
-    # matchup_file_path = f"data/{season}/{league_id}/{week}/matchup.json"
-    # s3op.write_json_to_s3(matchup_file_path)
+    matchup_file_path = f"{season}/{league_id}/{predict_week}/matchup.json"
+    s3op.write_json_to_s3(next_matchups, matchup_file_path)
+    # to do: generate matchup chart
     update_status(task_id, { "status": 'IN PROGRESS', "percentage": 50 })
 
-    # week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
-    # total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
+    league_name = utils.get_league_info(league_id)['name']
+    week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
+    roto_week_bar_file_path = f"{season}/{league_id}/{week}/chart/roto_bar.png"
+    s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
+    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 55 })
+
+    total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
+    roto_total_bar_file_path = f"{season}/{league_id}/0/chart/roto_bar.png"
+    s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
     update_status(task_id, { "status": 'IN PROGRESS', "percentage": 60 })
 
     # radar chart for each team
     radar_charts = chart.league_radar_charts(week_score, total_score, week)
     for idx, img_data in enumerate(radar_charts):
-        radar_chart_file_path = f"data/{season}/{league_id}/{week}/chart/r_d_{idx:02d}.png"
+        radar_chart_file_path = f"{season}/{league_id}/{week}/chart/r_d_{idx:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
     update_status(task_id, { "status": 'IN PROGRESS', "percentage": 80 })
 
     # matchup prediction for next week
     next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchups, predict_week)
     for idx, img_data in enumerate(next_matchup_charts):
-        radar_chart_file_path = f"data/{season}/{league_id}/{week}/chart/r_c_{idx:02d}.png"
+        radar_chart_file_path = f"{season}/{league_id}/{week}/chart/r_c_{idx:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
     update_status(task_id, { "status": 'COMPLETED' })
 
 
 def update_status(taskId, status):
-    pass
+    # update the time to live of this item
+    ttl = int((datetime.now() + timedelta(days=365)).timestamp())
+    dynamodb = boto3.resource('dynamodb') 
+    logger.debug('update task status to dynamodb table %s', os.environ.get("DB_TASK_TABLE"))
+    table = dynamodb.Table(os.environ.get("DB_TASK_TABLE")) 
+    #inserting values into table 
+
+    response = table.update_item(
+        Key={'taskId': taskId},
+        UpdateExpression='SET status=:val1, percentage=:val2, expireAt=:val3',
+        ExpressionAttributeValues =json.loads(json.dumps({
+            ':val1':  status['status'],
+            ':val2':  status['percentage'] if 'percentage' in status else 0,
+            ':val3':  ttl
+        })),
+        ReturnValues="UPDATED_NEW"
+    )
+    logger.debug(response["Attributes"])

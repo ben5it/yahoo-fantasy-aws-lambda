@@ -86,7 +86,7 @@ def lambda_handler(event, context):
             body = json.loads(body)
 
         league_key = body['league_key']
-        league_id = body['league_id']
+        league_id = int(body['league_id'])
         week = int (body['week'])
         season = utils.get_season()
         taskId = f"task_{season}_{league_id:08d}_{week:02d}"
@@ -136,7 +136,7 @@ def lambda_handler(event, context):
     else:
         return {
             'statusCode': 501,
-            'body': json.dumps('No handler found for route {path}')
+            'body': json.dumps(f'No handler found for route {path}')
         }  
 
 

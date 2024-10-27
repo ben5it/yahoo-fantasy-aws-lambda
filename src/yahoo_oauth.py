@@ -94,7 +94,7 @@ def callback(queryString):
                 'expiration_time':expiration_time,
                 'expireAt': ttl             
             }
-            logger.debug(data)
+            logger.info(data)
             ddb_data = json.loads(json.dumps(data), parse_float=Decimal)
             dynamodb = boto3.resource('dynamodb') 
             logger.debug('DB_Session_Table： %s', os.environ.get("DB_SESSION_TABLE"))

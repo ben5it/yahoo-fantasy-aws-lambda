@@ -38,13 +38,13 @@ def get_leagues():
     # sort by league id
     leagues.sort(key = lambda league : int(league['league_id']))
 
-    logger.debug('leagues')
-    logger.debug(leagues)
+    logger.info('leagues')
+    logger.info(leagues)
     # [{"league_key": "428.l.7124", "league_id": "7124", "name": "Never Ending", "logo_url": false, "scoring_type": "head", "start_date": "2023-10-24", "end_date": "2024-04-14", "current_week": 24, "start_week": "1", "end_week": "24"}, {"league_key": "428.l.23476", "league_id": "23476", "name": "2023~2024 Gamma", "logo_url": "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/88a86479d6cf4bc472623e59484ab6c70e397336290032a9c744125e158d2c21.jpg", "scoring_type": "head", "start_date": "2023-10-24", "end_date": "2024-04-14", "current_week": 24, "start_week": "1", "end_week": "24"}]
 
     for league in leagues:
         league_id = league["league_id"]
-        league_info_file_key = f"data/{season}/{league_id}/league_info.json"
+        league_info_file_key = f"{season}/{league_id}/league_info.json"
         s3op.write_json_to_s3(league, league_info_file_key)
 
     return leagues
@@ -62,7 +62,7 @@ def get_league_teams(league_key, league_id):
     # if data already cached in s3, read from s3;
     # otherwise retirive from yahoo and save to s3
     season = utils.get_season()
-    file_path = f"data/{season}/{league_id}/teams.json"
+    file_path = f"{season}/{league_id}/teams.json"
     teams = s3op.load_json_from_s3(file_path)
     if teams is not None:
         logger.debug(json.dumps(teams, indent=4))  
@@ -92,7 +92,7 @@ def get_league_teams(league_key, league_id):
 
         logger.debug('teams')
         logger.debug(teams)
-        utils.write_json_to_s3(teams, file_path)
+        s3op.write_json_to_s3(teams, file_path)
     
     return teams
 
@@ -209,7 +209,7 @@ def get_game_stat_categories():
     
     # if data already cached in s3, read from s3;
     # otherwise retirive from yahoo and save to s3
-    file_path = 'data/game_stat_categories.json'
+    file_path = 'game_stat_categories.json'
     categories = s3op.load_json_from_s3(file_path)
     if categories is not None:
         logger.debug(json.dumps(categories, indent=4))  
