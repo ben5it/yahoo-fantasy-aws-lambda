@@ -13,7 +13,7 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "e19b1ddd-23f7-4bfb-a3b2-b51db235d503",
+            "sessionId": "50ee75bf-50ee-4234-b52d-ac57825c9431",
             "league_key": "454.l.29689",
             "league_id": "29689",
             "week": "1"        
@@ -43,7 +43,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=e19b1ddd-23f7-4bfb-a3b2-b51db235d503"]
+            "cookies": ["sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431"]
           }
         },
         "environmentVariables": {
@@ -77,7 +77,7 @@
         },
         "querystring": "abc=def&qrs=tuv",
         "headers": {
-          "cookie": "sessionId=e19b1ddd-23f7-4bfb-a3b2-b51db235d503; name2=value2; name3=value3"
+          "cookie": "sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431; name2=value2; name3=value3"
         }
       }
     },
@@ -95,7 +95,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=e19b1ddd-23f7-4bfb-a3b2-b51db235d503"]
+            "cookies": ["sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431"]
           }
         },
         "environmentVariables": {

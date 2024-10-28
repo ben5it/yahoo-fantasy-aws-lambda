@@ -41,68 +41,67 @@ def lambda_handler(event, context):
     week = int(event['week'])
 
     task_id = utils.get_task_id(league_id, week)
-    update_status(task_id, { "status": 'INITIATED' })
+    update_status(task_id, { "state": 'INITIATED' })
    
     game_stat_categories = fapi.get_game_stat_categories()
     teams = fapi.get_league_teams(league_key, league_id)
     team_keys = list(map(lambda x: x['team_key'], teams))
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 5 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 5 })
 
     total_df, sort_orders, points = fapi.get_league_stats(team_keys, game_stat_categories, 0)
     week_df, sort_orders, week_points = fapi.get_league_stats(team_keys, game_stat_categories, week)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 15 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 15 })
     
     week_score = cmpt.stat_to_score(week_df, sort_orders)
     total_score = cmpt.stat_to_score(total_df, sort_orders)
     battle_score = cmpt.roto_score_to_battle_score(week_score, week_points)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 25 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 25 })
 
     # write to S3
     season = utils.get_season()
     total_stats_csv_file_key = f"{season}/{league_id}/0/stats.csv"
-    total_score_csv_file_key = f"{season}/{league_id}/0/roto-score.csv"
+    total_score_csv_file_key = f"{season}/{league_id}/0/roto-point.csv"
     week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
-    week_score_csv_file_key = f"{season}/{league_id}/{week}/roto-score.csv"
-    week_battle_csv_file_key = f"{season}/{league_id}/{week}/battle-score.csv"
+    week_score_csv_file_key = f"{season}/{league_id}/{week}/roto-point.csv"
+    week_battle_csv_file_key = f"{season}/{league_id}/{week}/h2h-score.csv"
 
     s3op.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(total_score, total_score_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(week_score, week_score_csv_file_key)
     s3op.write_dataframe_to_csv_on_s3(battle_score, week_battle_csv_file_key)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 35 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 35 })
 
-    predict_week = utils.get_prediction_week(league_id)
-    next_matchups = fapi.get_league_matchup(team_keys, predict_week)
-    matchup_file_path = f"{season}/{league_id}/{predict_week}/matchup.json"
+    forecast_week = utils.get_forecast_week(league_id)
+    next_matchups = fapi.get_league_matchup(team_keys, forecast_week)
+    matchup_file_path = f"{season}/{league_id}/{forecast_week}/matchup.json"
     s3op.write_json_to_s3(next_matchups, matchup_file_path)
-    # to do: generate matchup chart
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 50 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 50 })
 
     league_name = utils.get_league_info(league_id)['name']
     week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
-    roto_week_bar_file_path = f"{season}/{league_id}/{week}/chart/roto_bar.png"
+    roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 55 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 55 })
 
     total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
-    roto_total_bar_file_path = f"{season}/{league_id}/0/chart/roto_bar.png"
+    roto_total_bar_file_path = f"{season}/{league_id}/0/roto_bar.png"
     s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 60 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 60 })
 
     # radar chart for each team
     radar_charts = chart.league_radar_charts(week_score, total_score, week)
     for idx, img_data in enumerate(radar_charts):
-        radar_chart_file_path = f"{season}/{league_id}/{week}/chart/r_d_{idx:02d}.png"
+        radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-    update_status(task_id, { "status": 'IN PROGRESS', "percentage": 80 })
+    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 80 })
 
-    # matchup prediction for next week
-    next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchups, predict_week)
+    # matchup forecast for next week
+    next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchups, forecast_week)
     for idx, img_data in enumerate(next_matchup_charts):
-        radar_chart_file_path = f"{season}/{league_id}/{week}/chart/r_c_{idx:02d}.png"
+        radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-    update_status(task_id, { "status": 'COMPLETED' })
+    update_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
 
 def update_status(taskId, status):
@@ -115,10 +114,13 @@ def update_status(taskId, status):
 
     response = table.update_item(
         Key={'taskId': taskId},
-        UpdateExpression='SET status=:val1, percentage=:val2, expireAt=:val3',
+        UpdateExpression='SET #state=:val1, percentage=:val2, expireAt=:val3',
+        ExpressionAttributeNames={
+            '#state': 'state'
+        },
         ExpressionAttributeValues =json.loads(json.dumps({
-            ':val1':  status['status'],
-            ':val2':  status['percentage'] if 'percentage' in status else 0,
+            ':val1':  status['state'],
+            ':val2':  status.get('percentage', 0),
             ':val3':  ttl
         })),
         ReturnValues="UPDATED_NEW"

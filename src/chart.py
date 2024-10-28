@@ -9,11 +9,14 @@ from matplotlib import font_manager
 cnFontProp = font_manager.FontProperties(fname='SimSun-01.ttf')
 import matplotlib.pyplot as plt
 
-def league_bar_chart(df, title):
+def league_bar_chart(df, title, sort=False):
     '''Generate a bar chart displaying the total score of each team
     '''
-    # sort by total
-    sorted_df = df.sort_values(by=['Total'], ascending=False)
+    if sort:
+        # sort by total
+        sorted_df = df.sort_values(by=['Total'], ascending=False)
+    else:
+        sorted_df = df
 
     names = sorted_df.index
     scores = sorted_df['Total']
@@ -23,7 +26,7 @@ def league_bar_chart(df, title):
     width = 0.5
 
     # Plotting the bars
-    fig, ax = plt.subplots(figsize=(12,9))
+    fig, ax = plt.subplots(figsize=(12,9), dpi=120)
 
     # Create a bar with week score,
     # in position pos,
@@ -31,7 +34,7 @@ def league_bar_chart(df, title):
     # plt.bar([p + width/2 for p in pos], week_scores, width, alpha=0.25, color='#429bf4', edgecolor='#429bf4', label='Week')
 
     # add label (value) to each team
-    ax.bar_label(bar_container, padding = 5)
+    ax.bar_label(bar_container, padding = 3)
 
     # Set the y axis label
     ax.set_ylabel('Score')
@@ -56,6 +59,8 @@ def league_bar_chart(df, title):
     # Adding the legend and showing the plot
     # plt.legend(['Total', 'Week '+ str(week)], loc='upper right')
     plt.grid(linestyle='--', linewidth=1, axis='y', alpha=0.7)
+
+    plt.tight_layout()
 
     img_data = BytesIO()
     plt.savefig(img_data, format='png')

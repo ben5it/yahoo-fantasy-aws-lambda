@@ -25,7 +25,7 @@ def get_season():
     return season
 
 
-def get_prediction_week(league_id):
+def get_forecast_week(league_id):
     season = get_season()
     league_info_file_key = f"{season}/{league_id}/league_info.json"
     league_info = s3op.load_json_from_s3(league_info_file_key)
@@ -35,15 +35,15 @@ def get_prediction_week(league_id):
     today = datetime.now(pytz.timezone('US/Pacific')).date()
     weekday = today.weekday()
 
-    predict_week = current_week + 1
-    # if it is Monday, set predict week to current week
+    forecast_week = current_week + 1
+    # if it is Monday, set forecast week to current week
     # because this is used for research the matchup
     if weekday < 1:
-        predict_week -= 1
-    if predict_week > end_week:
-        predict_week = end_week
+        forecast_week -= 1
+    if forecast_week > end_week:
+        forecast_week = end_week
 
-    return predict_week
+    return forecast_week
 
 def get_league_info(league_id):
     season = get_season()
