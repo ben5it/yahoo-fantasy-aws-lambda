@@ -24,7 +24,7 @@ def lambda_handler(event, context):
 
 
     sessionId = event['sessionId']
-    valid, access_token = utils.is_valid_session(sessionId)
+    valid, access_token, user_info = utils.is_valid_session(sessionId)
     if valid == False:
         logger.error('Invalid session')
         return
@@ -105,8 +105,11 @@ def lambda_handler(event, context):
 
 
 def update_status(taskId, status):
-    # update the time to live of this item
+    # Get the current timestamp
+    now = int(datetime.now().timestamp())
+    # Get the timestamp for a year later
     ttl = int((datetime.now() + timedelta(days=365)).timestamp())
+
     dynamodb = boto3.resource('dynamodb') 
     logger.debug('update task status to dynamodb table %s', os.environ.get("DB_TASK_TABLE"))
     table = dynamodb.Table(os.environ.get("DB_TASK_TABLE")) 
@@ -114,14 +117,15 @@ def update_status(taskId, status):
 
     response = table.update_item(
         Key={'taskId': taskId},
-        UpdateExpression='SET #state=:val1, percentage=:val2, expireAt=:val3',
+        UpdateExpression='SET #state=:val1, percentage=:val2, last_updated=:val3, expireAt=:val4',
         ExpressionAttributeNames={
             '#state': 'state'
         },
         ExpressionAttributeValues =json.loads(json.dumps({
             ':val1':  status['state'],
             ':val2':  status.get('percentage', 0),
-            ':val3':  ttl
+            ':val3':  now,
+            ':val4':  ttl
         })),
         ReturnValues="UPDATED_NEW"
     )

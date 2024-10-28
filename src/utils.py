@@ -70,8 +70,12 @@ def get_access_token_from_db(sessionId):
 
 def is_valid_session(sessionId):
     
+    valid = False
+    access_token = None
+    user_info = {}
+
     if sessionId is None or sessionId == '':
-        return False, None
+        return valid, access_token, user_info
 
     logger.debug('try to find session in db')        
     dynamodb = boto3.resource('dynamodb') 
@@ -79,27 +83,33 @@ def is_valid_session(sessionId):
 
     resp  = table.get_item(Key={"sessionId": sessionId})
     if 'Item' in resp:
-        expiration_time = float(resp['Item']['expiration_time'])
-        userId = resp['Item']['userId']
         access_token = resp['Item']['access_token']
 
+        user_info['userId'] = resp['Item']['userId']
+        user_info['email'] = resp['Item']['email']
+        user_info['nickname'] = resp['Item']['nickname']
+        user_info['profile_image'] = resp['Item']['profile_image']
+
         now = int(time.time())
+        expiration_time = float(resp['Item']['expiration_time'])
 
         if expiration_time - now < 0: 
             logger.debug("Session already expires.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
-            return False, access_token  
+            valid = False
         # expiring soon (in 5 minute), refresh token
         elif expiration_time - now < 300:  
             logger.debug("expiring in 5 minute, need to refresh token.  Expiration time: {}, Now:{}".format(datetime.fromtimestamp(expiration_time), datetime.fromtimestamp(now)))
             current_refresh_token = resp['Item']['refresh_token']
             refresh_token(sessionId, current_refresh_token)
-            return True, access_token
+            valid = True
         else:
             logger.debug("Find valid session id db")
-            return True, access_token
+            valid = True
     else:
         logger.debug("SessionId {} not found in db".format(sessionId))
-        return False, None
+        valid = False
+    
+    return valid, access_token, user_info
 
 def refresh_token(sessionId, current_refresh_token):
     encoded_credentials = base64.b64encode(('{0}:{1}'.format(os.environ.get('CLIENT_ID'), os.environ.get('CLIENT_SECRET'))).encode('utf-8'))

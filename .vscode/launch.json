@@ -13,7 +13,7 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "50ee75bf-50ee-4234-b52d-ac57825c9431",
+            "sessionId": "48a8ed9a-04c7-4567-ae1a-5d867d6fff20",
             "league_key": "454.l.29689",
             "league_id": "29689",
             "week": "1"        
@@ -43,7 +43,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431"]
+            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"]
           }
         },
         "environmentVariables": {
@@ -65,19 +65,27 @@
         "templatePath": "${workspaceFolder}/template.yaml",
         "logicalId": "WebServerFunction"
       },
-      "api": {
-        "path": "/api/analyze",
-        "httpMethod": "post",
+      "lambda": {
+        "runtime": "python3.11",
         "payload": {
           "json": {
-            "league_key": "454.l.29689",
-            "league_id": "29689",
-            "week": "1"
+            "rawPath": "/api/getdata",
+            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"],
+            "queryStringParameters": {
+              "league_key": "454.l.29689",
+              "league_id": "29689",
+              "week": "1"
+            },
           }
         },
-        "querystring": "abc=def&qrs=tuv",
-        "headers": {
-          "cookie": "sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431; name2=value2; name3=value3"
+        "environmentVariables": {
+          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_SECRET": "b387ea999b6615b308c8a67fd3ea70f778e8703a",
+          "DB_SESSION_TABLE": "yahoo-fantasy-session",
+          "DB_TASK_TABLE": "yahoo-fantasy-task",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-data",
+          "BASE_URL": "https://fantasy.laohuang.org",
+          "TASK_JOB_FUNCTION_NAME": "yahoo-fantasy-task"
         }
       }
     },
@@ -95,7 +103,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=50ee75bf-50ee-4234-b52d-ac57825c9431"]
+            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"]
           }
         },
         "environmentVariables": {

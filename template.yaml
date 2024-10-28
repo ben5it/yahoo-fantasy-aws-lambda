@@ -6,7 +6,7 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 900  # 15 minutes
 
 Parameters:
   ProjectName:
@@ -154,7 +154,7 @@ Resources:
           ForwardedValues:
             QueryString: false
             Cookies:
-              Forward: none
+                Forward: all
         CacheBehaviors:
           - PathPattern: '/data/*'
             TargetOriginId: S3DataOrigin
@@ -180,13 +180,16 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            CachedMethods:
-              - GET
-              - HEAD
+            # CachedMethods:
+            #   - GET
+            #   - HEAD
             ForwardedValues:
               QueryString: true
               Cookies:
                 Forward: all
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
           - PathPattern: '/login'
             TargetOriginId: ApiGatewayOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -198,13 +201,16 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            CachedMethods:
-              - GET
-              - HEAD
+            # CachedMethods:
+            #   - GET
+            #   - HEAD
             ForwardedValues:
-              QueryString: true
+              QueryString: false
               Cookies:
-                Forward: all
+                Forward: none
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
           - PathPattern: '/callback'
             TargetOriginId: ApiGatewayOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -216,13 +222,58 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            CachedMethods:
-              - GET
-              - HEAD
+            # CachedMethods:
+            #   - GET
+            #   - HEAD
             ForwardedValues:
               QueryString: true
               Cookies:
                 Forward: all
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
+          - PathPattern: '/check_auth'
+            TargetOriginId: ApiGatewayOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            # CachedMethods:
+            #   - GET
+            #   - HEAD
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: all
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
+          - PathPattern: '/logout'
+            TargetOriginId: ApiGatewayOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            # CachedMethods:
+            #   - GET
+            #   - HEAD
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: all
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
         ViewerCertificate:
           AcmCertificateArn: !Ref 'SSLCertificateArn'
           SslSupportMethod: sni-only

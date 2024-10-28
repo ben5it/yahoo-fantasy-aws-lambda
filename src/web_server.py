@@ -22,48 +22,51 @@ def lambda_handler(event, context):
     path = event['rawPath']
     logger.debug('rawPath: %s', path)
 
+    if path =='/login':
+        return yOauth.login()
+
+    if path == '/callback':
+        return yOauth.callback(event['rawQueryString'])
+
     sessionId = get_session_id_from_cookies(event)
     logger.debug('SessionId: %s', sessionId)
-    valid, access_token = utils.is_valid_session(sessionId)
+    valid, access_token, user_info = utils.is_valid_session(sessionId)
 
-    if path =='/login':
-        # if already have a valid session, then don't need to login again, just redict to main page
+    if path == '/check_auth':
         if valid == True:
             return {
-                "isBase64Encoded": False,
-                "statusCode": 302,
-                "headers": {
-                    "Location": os.environ.get('BASE_URL')
-                },
-                "body": ""
+                'statusCode': 200,
+                'body': json.dumps(user_info, ensure_ascii=False, indent=4)
             }
         else:
-            return yOauth.login()
-
-    elif path == '/callback':
-        # if already have a valid session, then actually the callback method should not be called, redict to main page
-        if valid == True:
             return {
-                "isBase64Encoded": False,
-                "statusCode": 302,
-                "headers": {
-                    "Location": os.environ.get('BASE_URL')
-                },
-                "body": ""
+                'statusCode': 200,
+                'body': json.dumps("not authenticated")
+            }
+    
+    if path == '/logout':
+        if valid == True:
+            # remove session from db
+            remove_session(sessionId)
+
+            return {
+                'statusCode': 200,
+                'body': json.dumps("Successfully logged out")
             }
         else:
-            return yOauth.callback(event['rawQueryString'])
+            return {
+                'statusCode': 200,
+                'body': json.dumps("not authenticated")
+            }
 
-    # for routes other than login and callback, we must need a valid session
-    # so if it is not valid, need to redirect to login
+
+    # for routes other than login/callback/check_auth/logout, we must need a valid session
+    # so if it is not valid, return 401
     if valid == False:
-        logger.debug('Invalid SessionId: %s, rediect to login page.', sessionId)
+        logger.debug(f'Not authenticated: Invalid SessionId: {sessionId}.')
         return {
-            "isBase64Encoded": False,
-            "statusCode": 302,
-            "headers": {
-                "Location": f'{os.environ.get("BASE_URL")}/login'
-            }
+            'statusCode': 401,
+            'body': json.dumps("not authenticated")
         }
 
     # now we have valid session, so we can proceed
@@ -79,19 +82,20 @@ def lambda_handler(event, context):
             'body': json.dumps(leagues)
         }
 
-    elif path == '/api/analyze':
+    elif path == '/api/getdata':
 
-        body = event['body']
-        if type(body) == str:
-            body = json.loads(body)
-
-        league_key = body['league_key']
-        league_id = int(body['league_id'])
-        week = int (body['week'])
+        qs  = event.get('queryStringParameters')
+        if 'league_key' not in qs or 'league_id' not in qs or 'week' not in qs :
+            logger.error('Missing parameters in query string, requirede parameters: league_key, league_id, week')
+            return
+    
+        league_key = qs['league_key']
+        league_id = int(qs['league_id'])
+        week = int (qs['week'])
         season = utils.get_season()
         taskId = f"task_{season}_{league_id:08d}_{week:02d}"
         parms = {
-            "taskId": taskId,
+            "sessionId": sessionId,
             "league_key": league_key,
             "league_id": league_id,
             "week": week
@@ -108,15 +112,16 @@ def lambda_handler(event, context):
         table = dynamodb.Table(os.environ.get("DB_TASK_TABLE")) 
         resp  = table.get_item(Key={"taskId": taskId})
         if 'Item' in resp:
-            status = resp['Item']['status']
-            if status == 'COMPLETED':
-                last_updated = int(resp['Item']['last_updated'])
-                now = int(time.time())
+            state = resp['Item']['state']
+            percentage = int(resp['Item']['percentage'])
+            last_updated = int(resp['Item']['last_updated'])
+            now = int(time.time())
+            if state == 'COMPLETED':
                  # still less than 10 minutes after last update, consider it as up to date
                 if now - last_updated < 600: 
                     return {
                         'statusCode': 200,
-                        'body': json.dumps(status)
+                        'body': json.dumps({ "state": state })
                     }
                 else: # consider it as out of date, need to run analysis again
                     return run_analysis(parms)
@@ -124,10 +129,13 @@ def lambda_handler(event, context):
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
             # so this should be either 'INITIATED' or 'IN PROGRESS', no need to run again
             else: 
-                return {
-                    'statusCode': 202,
-                    'body': json.dumps(status)
-                }
+                if now - last_updated > 180: # if last update time is more than 3 minutes, we consider it as timeout, need to rerun
+                    return run_analysis(parms)
+                else:
+                    return {
+                        'statusCode': 202,
+                        'body': json.dumps({ "state": state, "percentage": percentage })
+                    }
         # no task id found in db, that means this is the first time to run
         else:
             return run_analysis(parms)
@@ -143,15 +151,19 @@ def lambda_handler(event, context):
 def  run_analysis(parms):
 
     lambda_client = boto3.client('lambda')
+
+    # Prepare the payload
+    payload = json.dumps(parms)
+
     lambda_client.invoke(
         FunctionName = os.environ.get('TASK_JOB_FUNCTION_NAME'),
         InvocationType = 'Event',  # Asynchronous invocation,
-        Payload = parms
+        Payload = payload
     )
 
     return {
         'statusCode': 202,
-        'body': json.dumps('INITIATED')
+        'body': json.dumps({ "state": 'INITIATED' })
     }
       
 
@@ -168,3 +180,24 @@ def get_session_id_from_cookies(event):
                 break
 
     return sessionId
+
+def remove_session(sessionId):
+    dynamodb = boto3.resource('dynamodb') 
+    table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 
+    table.delete_item(Key={"sessionId": sessionId})
+
+
+def get_result(league_id, week):
+
+    season = utils.get_season()
+    total_stats_csv_file_key = f"{season}/{league_id}/0/stats.csv"
+    total_point_csv_file_key = f"{season}/{league_id}/0/roto-point.csv"
+    week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
+    week_point_csv_file_key = f"{season}/{league_id}/{week}/roto-point.csv"
+    week_battle_csv_file_key = f"{season}/{league_id}/{week}/h2h-score.csv"
+
+    # bar chart file path
+    roto_week_bar_file_path = f"/data/{season}/{league_id}/{week}/roto_bar.png"
+    roto_total_bar_file_path = f"/data/{season}/{league_id}/0/roto_bar.png"
+
+    pass
