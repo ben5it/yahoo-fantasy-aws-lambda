@@ -101,14 +101,19 @@ def callback(queryString):
             table = dynamodb.Table(os.environ.get("DB_SESSION_TABLE")) 
             #inserting values into table 
             response = table.put_item(Item = ddb_data) 
-            
+
+            # Remove sensitive properties before returning the response
+            del data['access_token']
+            del data['refresh_token']
+            del data['expireAt']
+
             return {
                 "cookies" : [f"sessionId={sessionId}"],
                 "isBase64Encoded": False,
-                "statusCode": 302,
-                "headers": {
-                    "Location": os.environ.get('BASE_URL')
-                },
-                "body": ""
+                "statusCode": 200,
+                # "headers": {
+                #     "Location": os.environ.get('BASE_URL')
+                # },
+                "body": json.dumps(data, ensure_ascii=False, indent=4)
             }
 

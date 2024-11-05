@@ -19,7 +19,7 @@ logger = cfg.logger
 def get_season():
     today =date.today()
     season = today.year
-    if today.month < 10 or (today.month == 10 and today.day < 25): # nba season usually starts at the end of Oct
+    if today.month < 10 or (today.month == 10 and today.day < 26): # nba season usually starts at the end of Oct
         season -= 1   
     
     return season
@@ -36,9 +36,9 @@ def get_forecast_week(league_id):
     weekday = today.weekday()
 
     forecast_week = current_week + 1
-    # if it is Monday, set forecast week to current week
+    # if it is Mon/Tue/Wed, set forecast week to current week
     # because this is used for research the matchup
-    if weekday < 1:
+    if weekday < 3:
         forecast_week -= 1
     if forecast_week > end_week:
         forecast_week = end_week

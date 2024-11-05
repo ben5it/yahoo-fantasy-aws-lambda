@@ -31,14 +31,15 @@ def lambda_handler(event, context):
     else:
         fapi.set_access_token(access_token)
 
-    if 'league_key' not in event or 'league_id' not in event or 'week' not in event :
-        logger.error('Invalid input: league_key, league_id or week is missing')
+    if 'league_id' not in event or 'week' not in event :
+        logger.error('Invalid input: league_id or week is missing')
         return
     
-
-    league_key = event['league_key']
     league_id = int(event['league_id'])
     week = int(event['week'])
+
+    league_info = utils.get_league_info(league_id)
+    league_key = league_info['league_key']
 
     task_id = utils.get_task_id(league_id, week)
     update_status(task_id, { "state": 'INITIATED' })
@@ -48,13 +49,14 @@ def lambda_handler(event, context):
     team_keys = list(map(lambda x: x['team_key'], teams))
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 5 })
 
-    total_df, sort_orders, points = fapi.get_league_stats(team_keys, game_stat_categories, 0)
-    week_df, sort_orders, week_points = fapi.get_league_stats(team_keys, game_stat_categories, week)
+    total_df, sort_orders = fapi.get_league_stats(team_keys, game_stat_categories, 0)
+    week_df, sort_orders  = fapi.get_league_stats(team_keys, game_stat_categories, week)
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 15 })
     
     week_score = cmpt.stat_to_score(week_df, sort_orders)
     total_score = cmpt.stat_to_score(total_df, sort_orders)
-    battle_score = cmpt.roto_score_to_battle_score(week_score, week_points)
+    matchup_arr, matchup_dict = fapi.get_league_matchup(team_keys, week)
+    battle_score = cmpt.roto_score_to_battle_score(week_score, matchup_dict)
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 25 })
 
     # write to S3
@@ -73,9 +75,9 @@ def lambda_handler(event, context):
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 35 })
 
     forecast_week = utils.get_forecast_week(league_id)
-    next_matchups = fapi.get_league_matchup(team_keys, forecast_week)
+    next_matchup_arr, next_matchup_dict = fapi.get_league_matchup(team_keys, forecast_week)
     matchup_file_path = f"{season}/{league_id}/{forecast_week}/matchup.json"
-    s3op.write_json_to_s3(next_matchups, matchup_file_path)
+    s3op.write_json_to_s3(next_matchup_arr, matchup_file_path)
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 50 })
 
     league_name = utils.get_league_info(league_id)['name']
@@ -97,7 +99,7 @@ def lambda_handler(event, context):
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 80 })
 
     # matchup forecast for next week
-    next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchups, forecast_week)
+    next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchup_arr, forecast_week)
     for idx, img_data in enumerate(next_matchup_charts):
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)

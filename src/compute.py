@@ -5,7 +5,7 @@ import numpy as np
 
 def rankdata(a):
     """
-    Assign ranks to data, dealing with ties appropriately.
+    Assign ranks to data, dealing with ties appropriately using average ranking.
     
     Parameters
     ----------
@@ -23,6 +23,15 @@ def rankdata(a):
     inv[sorter] = np.arange(len(a))
     ranks = np.empty_like(a, dtype=float)
     ranks[sorter] = np.arange(1, len(a) + 1)
+    
+    # Handle ties by averaging the ranks
+    unique_values, inverse_indices, counts = np.unique(a, return_inverse=True, return_counts=True)
+    for i, count in enumerate(counts):
+        if count > 1:
+            indices = np.where(inverse_indices == i)[0]
+            average_rank = np.mean(ranks[indices])
+            ranks[indices] = average_rank
+    
     return ranks
 
 def data_to_ranking_score(values, reverse = False):
@@ -77,7 +86,7 @@ def compute_battle_score(scores_team1, scores_team2):
 
 
 
-def roto_score_to_battle_score(score_df, week_points):
+def roto_score_to_battle_score(score_df, matchup_dict):
     '''Give the roto score of a league for a week, calculate the matchup score against every other player
     '''
 
@@ -97,13 +106,22 @@ def roto_score_to_battle_score(score_df, week_points):
     # calculate the median point a team can get
     battle_df['中位数'] = battle_df.median(axis=1)
 
+    matchup_points = []
+    team_names=battle_df.index.tolist()
+    for team_name in team_names:
+        matchup_points.append(battle_df.at[team_name, matchup_dict[team_name]])
+
     # the current point a team gets
-    battle_df['本周得分'] = week_points
+    battle_df['本周得分'] = matchup_points
 
     # calculate the median point a team can get
     battle_df['分差'] = battle_df['本周得分'] - battle_df['中位数']
 
-    final_df = battle_df.sort_values(by=['分差', '本周得分'], ascending=False)
+    sorted_df = battle_df.sort_values(by=['分差', '本周得分'], ascending=False)
+
+     # Reorder the columns to match the order of the index
+    final_df = sorted_df.reindex(columns=sorted_df.index.tolist() + ['中位数', '本周得分', '分差'])
+
 
     return final_df
             

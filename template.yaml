@@ -4,15 +4,11 @@ Description: >
   SAM Template for yahoo-fantasy
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 900  # 15 minutes
+# Globals:
+#   Function:
+#     Timeout: 900  # 15 minutes
 
 Parameters:
-  ProjectName:
-    Type: String
-    Description: the project name
-    Default: yahoo-fantasy
   ClientId:
     Type: String
     Description: the yahoo applicaiton client id
@@ -40,7 +36,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      BucketName: !Sub '${ProjectName}-website'
+      BucketName: !Sub '${AWS::StackName}-website'
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
@@ -50,20 +46,6 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  DataBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      BucketName: !Sub '${ProjectName}-data'
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
 
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -81,21 +63,6 @@ Resources:
               StringEquals:
                 'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
 
-  DataBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref 'DataBucket'
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action: 's3:GetObject'
-            Resource: !Sub 'arn:aws:s3:::${DataBucket}/*'
-            Condition:
-              StringEquals:
-                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
 
   ApiGateway:
     Type: AWS::Serverless::HttpApi
@@ -107,17 +74,7 @@ Resources:
     Properties:
       OriginAccessControlConfig:
         Description: Access Control for Static Website S3 Origin
-        Name: !Sub "${ProjectName}-website-oac"
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
-
-  DataBucketOriginAccessControl:
-    Type: AWS::CloudFront::OriginAccessControl
-    Properties:
-      OriginAccessControlConfig:
-        Description: Access Control for Data S3 Origin
-        Name: !Sub "${ProjectName}-data-oac"
+        Name: !Sub "${AWS::StackName}-website-oac"
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
@@ -131,10 +88,6 @@ Resources:
           - Id: S3WebSiteOrigin
             DomainName: !GetAtt 'WebsiteBucket.RegionalDomainName'
             OriginAccessControlId: !GetAtt WebSiteBucketOriginAccessControl.Id
-            S3OriginConfig: {}
-          - Id: S3DataOrigin
-            DomainName: !GetAtt 'DataBucket.RegionalDomainName'
-            OriginAccessControlId: !GetAtt DataBucketOriginAccessControl.Id
             S3OriginConfig: {}
           - Id: ApiGatewayOrigin
             DomainName: !Sub '${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com'
@@ -156,40 +109,6 @@ Resources:
             Cookies:
                 Forward: all
         CacheBehaviors:
-          - PathPattern: '/data/*'
-            TargetOriginId: S3DataOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - GET
-              - HEAD
-            CachedMethods:
-              - GET
-              - HEAD
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: none
-          - PathPattern: '/api/*'
-            TargetOriginId: ApiGatewayOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - HEAD
-              - DELETE
-              - POST
-              - GET
-              - OPTIONS
-              - PUT
-              - PATCH
-            # CachedMethods:
-            #   - GET
-            #   - HEAD
-            ForwardedValues:
-              QueryString: true
-              Cookies:
-                Forward: all
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
           - PathPattern: '/login'
             TargetOriginId: ApiGatewayOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -201,9 +120,6 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            # CachedMethods:
-            #   - GET
-            #   - HEAD
             ForwardedValues:
               QueryString: false
               Cookies:
@@ -222,9 +138,6 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            # CachedMethods:
-            #   - GET
-            #   - HEAD
             ForwardedValues:
               QueryString: true
               Cookies:
@@ -243,9 +156,6 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            # CachedMethods:
-            #   - GET
-            #   - HEAD
             ForwardedValues:
               QueryString: false
               Cookies:
@@ -264,11 +174,26 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            # CachedMethods:
-            #   - GET
-            #   - HEAD
             ForwardedValues:
               QueryString: false
+              Cookies:
+                Forward: all
+            MinTTL: 0
+            MaxTTL: 0
+            DefaultTTL: 0
+          - PathPattern: '/api/*'
+            TargetOriginId: ApiGatewayOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            ForwardedValues:
+              QueryString: true
               Cookies:
                 Forward: all
             MinTTL: 0
@@ -338,15 +263,20 @@ Resources:
                 Resource: 
                   - !GetAtt UserSessionTable.Arn
                   - !GetAtt LongRunningJobTable.Arn
-        - PolicyName: 'LambdaS3Access' # allow lambda functions to access s3 bucket /data folder
+        - PolicyName: 'LambdaS3Access' # allow lambda functions to access s3 bucket for data
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               -
                 Effect: Allow
                 Action:
+                  - 's3:ListBucket'
+                Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}'
+              -
+                Effect: Allow
+                Action:
                   - 's3:*'
-                Resource: !Sub 'arn:aws:s3:::${DataBucket}/*'
+                Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}/data/*'
         - PolicyName: 'LambdaInvokeFunction' # allow lambda functions to invoke other lambda functions
           PolicyDocument:
             Version: '2012-10-17'
@@ -360,12 +290,12 @@ Resources:
   WebServerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ProjectName}-web-server'
+      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-web-server'
       RetentionInDays: 1
   LongRunningJobLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ProjectName}-task'
+      LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-task'
       RetentionInDays: 1
 
   
@@ -374,9 +304,11 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       PackageType: Image
-      FunctionName: !Sub ${ProjectName}-web-server
+      FunctionName: !Sub ${AWS::StackName}-web-server
       Architectures:
         - x86_64
+      MemorySize: 128  # Set memory size to 128 MB
+      Timeout: 30  # 30 seconds timeout
       Events:
         ApiEvent:
           Type: HttpApi
@@ -388,37 +320,39 @@ Resources:
         Variables:
           CLIENT_ID:  !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
-          DB_SESSION_TABLE: !Sub ${ProjectName}-session
-          DB_TASK_TABLE: !Sub ${ProjectName}-task
-          DATA_BUCKET_NAME: !Ref DataBucket
+          DB_SESSION_TABLE: !Sub ${AWS::StackName}-session
+          DB_TASK_TABLE: !Sub ${AWS::StackName}-task
+          DATA_BUCKET_NAME: !Ref WebsiteBucket
           TASK_JOB_FUNCTION_NAME: !Ref LongRunningJobFunction
           BASE_URL: !Sub https://${AlternateDomainName}
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_web_server
       DockerContext: ./src/
-      DockerTag: !Sub ${ProjectName}-web-server
+      DockerTag: !Sub ${AWS::StackName}-web-server
   
   LongRunningJobFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       PackageType: Image
-      FunctionName:  !Sub ${ProjectName}-task
+      FunctionName:  !Sub ${AWS::StackName}-task
       Architectures:
         - x86_64
+      MemorySize: 256  # Set memory size to 256 MB
+      Timeout: 900  # 15 minutes in seconds
       Environment:
         Variables:
           CLIENT_ID:  !Ref ClientId
           CLIENT_SECRET: !Ref ClientSecret
-          DB_SESSION_TABLE: !Sub ${ProjectName}-session
-          DB_TASK_TABLE: !Sub ${ProjectName}-task
-          DATA_BUCKET_NAME: !Ref DataBucket
+          DB_SESSION_TABLE: !Sub ${AWS::StackName}-session
+          DB_TASK_TABLE: !Sub ${AWS::StackName}-task
+          DATA_BUCKET_NAME: !Ref WebsiteBucket
           BASE_URL: !Sub https://${AlternateDomainName}
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_long_running_job
       DockerContext: ./src/
-      DockerTag: !Sub ${ProjectName}-task
+      DockerTag: !Sub ${AWS::StackName}-task
 
   # dynamodb tables
   UserSessionTable:
@@ -426,7 +360,7 @@ Resources:
     UpdateReplacePolicy: 'Retain'
     DeletionPolicy: Delete
     Properties:
-      TableName: !Sub '${ProjectName}-session'
+      TableName: !Sub '${AWS::StackName}-session'
       AttributeDefinitions:
         - AttributeType: 'S'
           AttributeName: 'sessionId'
@@ -446,7 +380,7 @@ Resources:
     UpdateReplacePolicy: 'Retain'
     DeletionPolicy: Delete
     Properties:
-      TableName: !Sub '${ProjectName}-task'
+      TableName: !Sub '${AWS::StackName}-task'
       AttributeDefinitions:
         - AttributeType: 'S'
           AttributeName: 'taskId'

@@ -79,24 +79,25 @@ def lambda_handler(event, context):
         leagues = fapi.get_leagues()
         return {
             'statusCode': 200,
-            'body': json.dumps(leagues)
+            'body': json.dumps(leagues, ensure_ascii=False, indent=4)
         }
 
     elif path == '/api/getdata':
 
         qs  = event.get('queryStringParameters')
-        if 'league_key' not in qs or 'league_id' not in qs or 'week' not in qs :
-            logger.error('Missing parameters in query string, requirede parameters: league_key, league_id, week')
-            return
+        if 'league_id' not in qs or 'week' not in qs :
+            logger.error('Missing parameters in query string, requirede parameters: league_id, week')
+            return {
+                'statusCode': 501,
+                'body': json.dumps('Missing parameters in query string, requirede parameters: league_id, week')
+            }  
     
-        league_key = qs['league_key']
         league_id = int(qs['league_id'])
         week = int (qs['week'])
         season = utils.get_season()
         taskId = f"task_{season}_{league_id:08d}_{week:02d}"
         parms = {
             "sessionId": sessionId,
-            "league_key": league_key,
             "league_id": league_id,
             "week": week
         }
@@ -129,7 +130,7 @@ def lambda_handler(event, context):
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
             # so this should be either 'INITIATED' or 'IN PROGRESS', no need to run again
             else: 
-                if now - last_updated > 180: # if last update time is more than 3 minutes, we consider it as timeout, need to rerun
+                if now - last_updated > 60: # if there is no update in more than 1 minute, then maybe a problem already occurs, need to rerun
                     return run_analysis(parms)
                 else:
                     return {

@@ -108,6 +108,7 @@ def get_league_stats(team_keys, game_stat_categories, week=0):
         uri = f"teams;team_keys={teams_str}/stats;type=week;week={week}"
     logger.debug(uri)
     resp = make_request(uri)
+    logger.debug(json.dumps(resp))
     tree = objectpath.Tree(resp)
     jfilter = tree.execute('$..teams..team..team_stats.stats')
 
@@ -148,17 +149,17 @@ def get_league_stats(team_keys, game_stat_categories, week=0):
     df['Team'] = team_names
     df.set_index('Team', inplace=True)
 
-    jfilter = tree.execute('$..team_points.total')
-    points = []
-    for entry in jfilter:
-        if entry != '':
-            point = (float)(entry)
-            points.append(point)
+    # jfilter = tree.execute('$..team_points.total')
+    # points = []
+    # for entry in jfilter:
+    #     if entry != '':
+    #         point = (float)(entry)
+    #         points.append(point)
     
     logger.debug(df)
     logger.debug(sort_orders)
-    logger.debug(points)
-    return df, sort_orders, points
+    # logger.debug(points)
+    return df, sort_orders
 
 
 
@@ -176,7 +177,7 @@ def get_league_matchup(team_keys, week):
 
     # week_matchup = {}
     resp = make_request(uri)
-    logger.debug(resp)
+    logger.debug(json.dumps(resp))
     tree = objectpath.Tree(resp)
     # jfilter = tree.execute('$..teams..team..matchups..matchup.(week, week_start, week_end)')
     # for e in jfilter:
@@ -191,14 +192,18 @@ def get_league_matchup(team_keys, week):
         # logger.debug(e)
         if e not in teams:
             teams.append(e)
+
+    # convert to dict
+    matchups = {}
     logger.debug('Week {} Match up'.format(week))
     for i in range(0, len(teams), 2 ): 
-        logger.debug('{} VS {}'.format(teams[i], teams[i+1])) 
+        team_name_1 = teams[i]
+        team_name_2 = teams[i+1]
+        matchups[team_name_1] = team_name_2
+        matchups[team_name_2] = team_name_1
+        logger.debug('{} VS {}'.format(team_name_1, team_name_2)) 
 
-    # week_matchup['matchup'] = teams
-    # logger.info(week_matchup) 
-
-    return teams
+    return teams, matchups
 
 def get_game_stat_categories():
     '''

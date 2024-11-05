@@ -13,6 +13,8 @@ logger = cfg.logger
 def load_json_from_s3(file_key):
 
     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+
+    file_key = 'data/' + file_key
         
     logger.debug(f"Try to get file {file_key} from s3 bucket {bucket_name}.")
     s3 = boto3.resource('s3')
@@ -33,6 +35,8 @@ def load_json_from_s3(file_key):
 def write_json_to_s3(json_data, file_key):
 
     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+
+    file_key = 'data/' + file_key
         
     logger.debug(f"Try to save file {file_key} to s3 bucket {bucket_name}.")
     
@@ -49,6 +53,8 @@ def write_json_to_s3(json_data, file_key):
 def load_dataframe_from_csv_on_s3(file_key):
 
     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+
+    file_key = 'data/' + file_key
 
     logger.debug(f"Try to load csv file {file_key} from s3 bucket {bucket_name}.")
 
@@ -67,6 +73,7 @@ def load_dataframe_from_csv_on_s3(file_key):
 def write_dataframe_to_csv_on_s3(df, file_key):
 
     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+    file_key = 'data/' + file_key
 
     file_path = f"s3://{bucket_name}/{file_key}"
    
@@ -80,6 +87,8 @@ def write_dataframe_to_csv_on_s3(df, file_key):
 def write_image_to_s3(img_data, file_key):
 
     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+    
+    file_key = 'data/' + file_key
         
     logger.debug(f"Try to save file {file_key} to s3 bucket {bucket_name}.")
     

@@ -13,10 +13,9 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "48a8ed9a-04c7-4567-ae1a-5d867d6fff20",
-            "league_key": "454.l.29689",
+            "sessionId": "528fe781-8167-4286-ac16-2b2fe2809bc2",
             "league_id": "29689",
-            "week": "1"        
+            "week": "2"        
           }
         },
         "environmentVariables": {
@@ -24,7 +23,7 @@
           "CLIENT_SECRET": "b387ea999b6615b308c8a67fd3ea70f778e8703a",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
-          "DATA_BUCKET_NAME": "yahoo-fantasy-data",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
           "BASE_URL": "https://fantasy.laohuang.org"
         }
       }
@@ -43,7 +42,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"]
+            "cookies": ["sessionId=528fe781-8167-4286-ac16-2b2fe2809bc2"]
           }
         },
         "environmentVariables": {
@@ -51,7 +50,7 @@
           "CLIENT_SECRET": "b387ea999b6615b308c8a67fd3ea70f778e8703a",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
-          "DATA_BUCKET_NAME": "yahoo-fantasy-data",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
           "BASE_URL": "https://fantasy.laohuang.org"
         }
       }
@@ -70,11 +69,10 @@
         "payload": {
           "json": {
             "rawPath": "/api/getdata",
-            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"],
+            "cookies": ["sessionId=528fe781-8167-4286-ac16-2b2fe2809bc2"],
             "queryStringParameters": {
-              "league_key": "454.l.29689",
               "league_id": "29689",
-              "week": "1"
+              "week": "2"
             },
           }
         },
@@ -83,7 +81,7 @@
           "CLIENT_SECRET": "b387ea999b6615b308c8a67fd3ea70f778e8703a",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
-          "DATA_BUCKET_NAME": "yahoo-fantasy-data",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
           "BASE_URL": "https://fantasy.laohuang.org",
           "TASK_JOB_FUNCTION_NAME": "yahoo-fantasy-task"
         }
@@ -103,7 +101,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=48a8ed9a-04c7-4567-ae1a-5d867d6fff20"]
+            "cookies": ["sessionId=528fe781-8167-4286-ac16-2b2fe2809bc2"]
           }
         },
         "environmentVariables": {
@@ -111,7 +109,7 @@
           "CLIENT_SECRET": "b387ea999b6615b308c8a67fd3ea70f778e8703a",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
-          "DATA_BUCKET_NAME": "yahoo-fantasy-data",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
           "BASE_URL": "https://fantasy.laohuang.org"
         }
       }
