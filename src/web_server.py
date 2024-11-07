@@ -120,10 +120,8 @@ def lambda_handler(event, context):
             if state == 'COMPLETED':
                  # still less than 10 minutes after last update, consider it as up to date
                 if now - last_updated < 600: 
-                    return {
-                        'statusCode': 200,
-                        'body': json.dumps({ "state": state })
-                    }
+                    return get_result(league_id, week)
+
                 else: # consider it as out of date, need to run analysis again
                     return run_analysis(parms)
             
@@ -190,15 +188,20 @@ def remove_session(sessionId):
 
 def get_result(league_id, week):
 
+    base_url = os.environ.get("BASE_URL") + '/data/'
     season = utils.get_season()
-    total_stats_csv_file_key = f"{season}/{league_id}/0/stats.csv"
-    total_point_csv_file_key = f"{season}/{league_id}/0/roto-point.csv"
-    week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
-    week_point_csv_file_key = f"{season}/{league_id}/{week}/roto-point.csv"
-    week_battle_csv_file_key = f"{season}/{league_id}/{week}/h2h-score.csv"
-
+    result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
     # bar chart file path
-    roto_week_bar_file_path = f"/data/{season}/{league_id}/{week}/roto_bar.png"
-    roto_total_bar_file_path = f"/data/{season}/{league_id}/0/roto_bar.png"
+    roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_w{week:02d}.png"
+    roto_total_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_total.png"
 
-    pass
+    data = {
+        "result_excel": base_url+ result_excel_file_key,
+        "roto_week_bar": base_url+ roto_week_bar_file_path,
+        "roto_total_bar": base_url + roto_total_bar_file_path
+    }
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps(data, ensure_ascii=False, indent=4)
+    }

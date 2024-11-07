@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from io import StringIO
+from io import StringIO, BytesIO
 import boto3
 import json
 import os
@@ -82,6 +82,30 @@ def write_dataframe_to_csv_on_s3(df, file_key):
         logger.debug(f"Successfully saved dataframe to {file_path}")
     except Exception as e:
         logger.debug(f"An error occurred when writing dataframe to {file_path}: {e}")
+
+
+def write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, file_key):
+
+    # Save the styled DataFrame to an Excel file in memory
+    excel_buffer = BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+
+        for styled_df, sheet_name in zip(styled_dfs, sheet_names):
+            styled_df.to_excel(writer, sheet_name=sheet_name)
+
+    # Reset the buffer position to the beginning after writing
+    excel_buffer.seek(0)
+
+    # Upload the file to S3
+    s3 = boto3.client('s3')
+    bucket_name = os.environ.get("DATA_BUCKET_NAME")
+    file_key = 'data/' + file_key
+
+    try:
+        s3.upload_fileobj(excel_buffer, bucket_name, file_key)
+        print(f"File uploaded to S3 at s3://{bucket_name}/{file_key}")
+    except Exception as e:
+        print(f"Failed to upload file to S3: {e}")
 
 
 def write_image_to_s3(img_data, file_key):

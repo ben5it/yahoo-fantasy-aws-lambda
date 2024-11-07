@@ -6,4 +6,6 @@ pandas
 pytz
 requests
 s3fs
+openpyxl
+Jinja2
 debugpy
