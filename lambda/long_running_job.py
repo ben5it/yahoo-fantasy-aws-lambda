@@ -98,7 +98,7 @@ def lambda_handler(event, context):
 
     league_name = utils.get_league_info(league_id)['name']
     week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
-    roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_w{week:02d}.png"
+    roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_wk{week:02d}.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
     update_status(task_id, { "state": 'IN PROGRESS', "percentage": 35 })
 
