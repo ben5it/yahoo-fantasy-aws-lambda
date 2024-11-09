@@ -2,7 +2,8 @@
   <header>
     <nav class="nav-bar">
       <div class="nav-links">
-        <router-link to="/">Home</router-link>
+        <router-link to="/">Analysis</router-link>
+        <router-link to="/tools">Tools</router-link>
         <router-link to="/about">About</router-link>
         <router-link to="/contact">Contact</router-link>
       </div>
