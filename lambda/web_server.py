@@ -38,12 +38,12 @@ def lambda_handler(event, context):
         if valid == True:
             return {
                 'statusCode': 200,
-                'body': json.dumps(user_info, ensure_ascii=False, indent=4)
+                'body': json.dumps({'authenticated': True, 'user_info': user_info}, ensure_ascii=False, indent=4)
             }
         else:
             return {
                 'statusCode': 200,
-                'body': json.dumps("not authenticated")
+                'body': json.dumps({'authenticated': False})
             }
     
     if path == '/logout':

@@ -13,7 +13,7 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "675e89d1-a018-47bb-aa04-58325198de9d",
+            "sessionId": "86e096e5-dabf-4d7b-9a31-725eddd6e7a0",
             "league_id": "29689",
             "week": "3"        
           }
@@ -42,7 +42,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"]
+            "cookies": ["sessionId=86e096e5-dabf-4d7b-9a31-725eddd6e7a0"]
           }
         },
         "environmentVariables": {
@@ -69,7 +69,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/getdata",
-            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"],
+            "cookies": ["sessionId=86e096e5-dabf-4d7b-9a31-725eddd6e7a0"],
             "queryStringParameters": {
               "league_id": "29689",
               "week": "3"
@@ -101,7 +101,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/download",
-            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"],
+            "cookies": ["sessionId=86e096e5-dabf-4d7b-9a31-725eddd6e7a0"],
             "queryStringParameters": {
               "league_id": "29689",
               "week": "3"
@@ -133,7 +133,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"]
+            "cookies": ["sessionId=86e096e5-dabf-4d7b-9a31-725eddd6e7a0"]
           }
         },
         "environmentVariables": {
