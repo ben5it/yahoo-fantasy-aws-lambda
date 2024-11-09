@@ -328,7 +328,7 @@ Resources:
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_web_server
-      DockerContext: ./src/
+      DockerContext: ./lambda/
       DockerTag: !Sub ${AWS::StackName}-web-server
   
   LongRunningJobFunction:
@@ -351,7 +351,7 @@ Resources:
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_long_running_job
-      DockerContext: ./src/
+      DockerContext: ./lambda/
       DockerTag: !Sub ${AWS::StackName}-task
 
   # dynamodb tables

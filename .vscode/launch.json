@@ -13,7 +13,7 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "3d44e009-4b77-47c2-87d2-7289673ed2b2",
+            "sessionId": "675e89d1-a018-47bb-aa04-58325198de9d",
             "league_id": "29689",
             "week": "3"        
           }
@@ -42,7 +42,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=3d44e009-4b77-47c2-87d2-7289673ed2b2"]
+            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"]
           }
         },
         "environmentVariables": {
@@ -58,7 +58,7 @@
     {
       "type": "aws-sam",
       "request": "direct-invoke",
-      "name": "Analze",
+      "name": "getdata",
       "invokeTarget": {
         "target": "template",
         "templatePath": "${workspaceFolder}/template.yaml",
@@ -69,7 +69,39 @@
         "payload": {
           "json": {
             "rawPath": "/api/getdata",
-            "cookies": ["sessionId=3d44e009-4b77-47c2-87d2-7289673ed2b2"],
+            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"],
+            "queryStringParameters": {
+              "league_id": "29689",
+              "week": "3"
+            },
+          }
+        },
+        "environmentVariables": {
+          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
+          "DB_SESSION_TABLE": "yahoo-fantasy-session",
+          "DB_TASK_TABLE": "yahoo-fantasy-task",
+          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
+          "BASE_URL": "https://fantasy.laohuang.org",
+          "TASK_JOB_FUNCTION_NAME": "yahoo-fantasy-task"
+        }
+      }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "download",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "${workspaceFolder}/template.yaml",
+        "logicalId": "WebServerFunction"
+      },
+      "lambda": {
+        "runtime": "python3.11",
+        "payload": {
+          "json": {
+            "rawPath": "/api/download",
+            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"],
             "queryStringParameters": {
               "league_id": "29689",
               "week": "3"
@@ -101,7 +133,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=3d44e009-4b77-47c2-87d2-7289673ed2b2"]
+            "cookies": ["sessionId=675e89d1-a018-47bb-aa04-58325198de9d"]
           }
         },
         "environmentVariables": {
