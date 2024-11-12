@@ -1,5 +1,5 @@
 import express from "express";
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 
 const app = express();
 const port = 3001;
@@ -11,6 +11,8 @@ app.use(cookieParser());
 // In-memory storage for demonstration purposes
 
 let valid_sessionId = null;
+
+let getDataCalled = 0;
 
 // Helper function to generate a random session ID
 const generateSessionId = () => Math.random().toString(36).substring(2, 15);
@@ -24,7 +26,12 @@ app.get("/login", (req, res) => {
 
 app.get("/check_auth", (req, res) => {
   const sessionId = req.cookies.sessionId;
-  console.log("Request /check_auth: CurrentSessionId", sessionId, "ValidSessionId", valid_sessionId);
+  console.log(
+    "Request /check_auth: CurrentSessionId",
+    sessionId,
+    "ValidSessionId",
+    valid_sessionId
+  );
   if (sessionId === valid_sessionId) {
     res.json({
       authenticated: true,
@@ -43,15 +50,23 @@ app.get("/check_auth", (req, res) => {
 
 app.get("/api/leagues", (req, res) => {
   const sessionId = req.cookies.sessionId;
-  console.log("Request /api/leagues: CurrentSessionId", sessionId, "ValidSessionId", valid_sessionId);
+  console.log(
+    "Request /api/leagues: CurrentSessionId",
+    sessionId,
+    "ValidSessionId",
+    valid_sessionId
+  );
   if (sessionId === valid_sessionId) {
     res.json([
       {
         league_key: "454.l.29689",
         league_id: "29689",
         name: "Hupu Alpha 2024-2025",
+        url: "https://basketball.fantasysports.yahoo.com/nba/29689",
         logo_url:
           "https://s.yimg.com/ep/cx/blendr/v2/image-y-png_1721252122724.png",
+        draft_status: "postdraft",
+        num_teams: 18,
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
@@ -63,8 +78,11 @@ app.get("/api/leagues", (req, res) => {
         league_key: "454.l.35674",
         league_id: "35674",
         name: "Star Basketball Association",
+        url: "https://basketball.fantasysports.yahoo.com/nba/35674",
         logo_url:
           "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/67c5dbdd01aceece878642155459275a885462bc166ad53f07760f03570f111c.jpg",
+        draft_status: "postdraft",
+        num_teams: 18,
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
@@ -76,8 +94,11 @@ app.get("/api/leagues", (req, res) => {
         league_key: "454.l.38297",
         league_id: "38297",
         name: "HUPU BETA 2024-2025",
+        url: "https://basketball.fantasysports.yahoo.com/nba/38297",
         logo_url:
           "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/132d3d075691e9503531915c083b69512150bbbdd0ac0cc9c961fa7847f7d2b6.jpg",
+        draft_status: "postdraft",
+        num_teams: 18,
         scoring_type: "roto",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
@@ -86,8 +107,11 @@ app.get("/api/leagues", (req, res) => {
         league_key: "454.l.68157",
         league_id: "68157",
         name: "Never Ending",
+        url: "https://basketball.fantasysports.yahoo.com/nba/68157",
         logo_url:
           "https://s.yimg.com/ep/cx/blendr/v2/image-basketball-3-png_1721241401648.png",
+        draft_status: "predraft",
+        num_teams: 15,
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
@@ -98,6 +122,41 @@ app.get("/api/leagues", (req, res) => {
     ]);
   } else {
     res.status(401).json({ error: "Unauthorized" });
+  }
+});
+
+app.get("/api/getdata", (req, res) => {
+  const sessionId = req.cookies.sessionId;
+  console.log(
+    "Request /getdata: CurrentSessionId",
+    sessionId,
+    "ValidSessionId",
+    valid_sessionId
+  );
+  if (sessionId === valid_sessionId) {
+    getDataCalled++;
+
+    if (getDataCalled % 3 === 1) {
+      res.json({ state: "INITIATED" });
+    } else if (getDataCalled % 3 === 2) {
+      res.json({ state: "IN PROGRESS", percentage: 50 });
+    } else {
+      res.json({
+        state: "COMPLETED",
+        league_id: 29689,
+        week: 4,
+        result: {
+          result_excel:
+            "https://basketball.fantasysports.yahoo.com/nba/29689/4",
+          bar_chart_week: "base_url+ roto_week_bar_file_path",
+          bar_chart_total: "base_url + roto_total_bar_file_path",
+          radar_chart_teams: [],
+          radar_chart_forcast: [],
+        },
+      });
+    }
+  } else {
+    res.json({ authenticated: false });
   }
 });
 

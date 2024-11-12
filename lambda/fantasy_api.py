@@ -28,8 +28,9 @@ def get_leagues():
 
     uri = 'users;use_login=1/games;game_codes=nba;seasons={}/leagues'.format(season)
     resp = make_request(uri)
+    logger.debug(json.dumps(resp))
     t = objectpath.Tree(resp)
-    jfilter = t.execute('$..leagues..(league_key, league_id, name, logo_url, scoring_type, start_date, end_date, current_week, start_week, end_week)')
+    jfilter = t.execute('$..leagues..(league_key, league_id, name, url, logo_url, draft_status, num_teams, scoring_type, start_date, end_date, current_week, start_week, end_week)')
 
     leagues = []
     for l in jfilter:
@@ -38,8 +39,7 @@ def get_leagues():
     # sort by league id
     leagues.sort(key = lambda league : int(league['league_id']))
 
-    logger.info('leagues')
-    logger.info(leagues)
+    logger.debug(json.dumps(leagues))
     # [{"league_key": "428.l.7124", "league_id": "7124", "name": "Never Ending", "logo_url": false, "scoring_type": "head", "start_date": "2023-10-24", "end_date": "2024-04-14", "current_week": 24, "start_week": "1", "end_week": "24"}, {"league_key": "428.l.23476", "league_id": "23476", "name": "2023~2024 Gamma", "logo_url": "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/88a86479d6cf4bc472623e59484ab6c70e397336290032a9c744125e158d2c21.jpg", "scoring_type": "head", "start_date": "2023-10-24", "end_date": "2024-04-14", "current_week": 24, "start_week": "1", "end_week": "24"}]
 
     for league in leagues:

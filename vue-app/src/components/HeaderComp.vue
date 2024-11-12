@@ -5,7 +5,7 @@
         <img src="/images/logo.png" alt="Logo" class="logo">
       </div>
       <div class="nav-links">
-        <router-link to="/analysis">Analysis</router-link>
+        <router-link to="/leagues">Analysis</router-link>
         <router-link to="/tools">Tools</router-link>
         <router-link to="/about">About</router-link>
         <router-link to="/contact">Contact</router-link>

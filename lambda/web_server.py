@@ -254,11 +254,16 @@ def get_result(league_id, week):
     radar_chart_forcast = get_files_with_pattern(prefix, "radar_forecast_")
 
     data = {
-        "result_excel": base_url+ result_excel_file_key,
-        "bar_chart_week": base_url+ roto_week_bar_file_path,
-        "bar_chart_total": base_url + roto_total_bar_file_path,
-        "radar_chart_teams": [ base_url + file_key for file_key in radar_chart_teams ],
-        "radar_chart_forcast": [ base_url + file_key for file_key in radar_chart_forcast ]
+        "state": 'COMPLETED',
+        "league_id": league_id,
+        "week": week,
+        "result": {
+            "result_excel": base_url+ result_excel_file_key,
+            "bar_chart_week": base_url+ roto_week_bar_file_path,
+            "bar_chart_total": base_url + roto_total_bar_file_path,
+            "radar_chart_teams": [ base_url + file_key for file_key in radar_chart_teams ],
+            "radar_chart_forcast": [ base_url + file_key for file_key in radar_chart_forcast ]
+        }
     }
 
     return {

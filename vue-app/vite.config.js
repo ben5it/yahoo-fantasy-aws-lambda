@@ -16,6 +16,10 @@ export default defineConfig({
       '/api/leagues': {
         target: 'http://localhost:3001',
         changeOrigin: true
+      },
+      '/api/getdata': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
       }
     }
   }

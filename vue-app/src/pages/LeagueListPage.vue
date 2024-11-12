@@ -4,18 +4,21 @@
     <div v-if="leagues.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">
         <div class="league-card">
-          <img :src="league.logo_url" alt="League Logo" class="league-logo" />
+          <a :href="league.url" target="_blank">
+            <img :src="league.logo_url" alt="League Logo" class="league-logo" />
+          </a>
           <h3>{{ league.name }}</h3>
           <p>Type: {{ league.scoring_type }}</p>
+          <p>Status: {{ league.draft_status }}</p>
           <button
             :class="[
               'btn',
-              league.scoring_type === 'head' ? 'btn-primary' : 'btn-secondary',
+              league.scoring_type === 'head' && league.draft_status === 'postdraft'? 'btn-primary' : 'btn-secondary',
             ]"
-            :disabled="league.scoring_type !== 'head'"
+            :disabled="league.scoring_type !== 'head' || league.draft_status !== 'postdraft'"
             @click="analyzeLeague(league)"
           >
-            {{ league.scoring_type === "head" ? "Analyze" : "Stay Tuned" }}
+            {{ league.draft_status !== 'postdraft'? "Not Available" : league.scoring_type === "head" ? "Analyze" : "Stay Tuned" }}
           </button>
         </div>
       </div>
@@ -28,12 +31,16 @@
 
 
 <script>
-import { ref, onMounted } from "vue";
+import { inject, ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+
 
 export default {
   name: "LeagueListPage",
   setup() {
     const leagues = ref([]);
+    const leagueStore = inject('leagueStore');
+    const router = useRouter();
 
     const fetchLeagues = async () => {
       try {
@@ -46,8 +53,9 @@ export default {
     };
 
     const analyzeLeague = (league) => {
-      // Implement your analyze logic here
-      console.log("Analyzing league:", league);
+      // Store the current league information globally
+      leagueStore.setCurrentLeague(league);
+      router.push("/result");
     };
 
     onMounted(() => {

@@ -74,7 +74,7 @@ export default {
         auth.setAuthenticated(data.authenticated);
         if (data.authenticated) {
           auth.setUser(data.user_info);
-          router.push('/analysis'); // Redirect to LeagueListPage if authenticated
+          router.push('/leagues'); // Redirect to LeagueListPage if authenticated
         }
       } catch (error) {
         auth.setAuthenticated(false);
