@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AboutPage from "../pages/AboutPage.vue";
-import AnalysisPage from "../pages/AnalysisPage.vue";
+import LeagueListPage from "../pages/LeagueListPage.vue";
 import ContactPage from "../pages/ContactPage.vue";
 import HomePage from "../pages/HomePage.vue";  
 import ToolPage from "../pages/ToolPage.vue";
@@ -11,7 +11,7 @@ const routes = [
   { path: "/", component: HomePage },
   { 
     path: "/analysis", 
-    component: AnalysisPage,
+    component: LeagueListPage,
     beforeEnter: (to, from, next) => {
       if (auth.state.authenticated) {
         next();
