@@ -110,10 +110,10 @@ def callback(queryString):
             return {
                 "cookies" : [f"sessionId={sessionId}"],
                 "isBase64Encoded": False,
-                "statusCode": 200,
-                # "headers": {
-                #     "Location": os.environ.get('BASE_URL')
-                # },
+                "statusCode": 302,
+                "headers": {
+                    "Location": os.environ.get('BASE_URL')
+                },
                 "body": json.dumps(data, ensure_ascii=False, indent=4)
             }
 

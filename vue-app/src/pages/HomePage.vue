@@ -55,13 +55,37 @@
   </div>
 </template>
 
-<script>
 
+<script>
+import { inject } from 'vue';
+import { useRouter } from 'vue-router';
+// import axios from '../axios';
 
 export default {
-  name: 'LoginComp',
+  name: "HomePage",
+  setup() {
+    const auth = inject('auth');
+    const router = useRouter();
 
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/check_auth');
+        const data = await response.json();
+        auth.setAuthenticated(data.authenticated);
+        if (data.authenticated) {
+          auth.setUser(data.user_info);
+          router.push('/analysis'); // Redirect to AnalysisPage if authenticated
+        }
+      } catch (error) {
+        auth.setAuthenticated(false);
+        console.error('Error checking authentication:', error);
+      }
+    };
 
+    checkAuth();
+
+    return { auth };
+  }
 };
 </script>
 

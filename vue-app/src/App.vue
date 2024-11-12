@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="container">
     <HeaderComp/>
     <router-view />
   </div>
@@ -19,3 +19,4 @@ body {
   font-family: Arial, sans-serif;
 }
 </style>
+

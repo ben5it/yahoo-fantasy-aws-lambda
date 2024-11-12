@@ -1,6 +1,15 @@
 {
   "configurations": [
     {
+      "name": "Launch Mock server",
+      "program": "${workspaceFolder}/vue-app/mock-server.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
       "type": "aws-sam",
       "request": "direct-invoke",
       "name": "Task",
