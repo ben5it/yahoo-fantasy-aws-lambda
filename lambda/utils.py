@@ -25,10 +25,33 @@ def get_season():
     return season
 
 
+def get_default_week(league_id):
+    season = get_season()
+    league_info_file_key = f"{season}/{league_id}/league_info.json"
+    league_info, last_updated = s3op.load_json_from_s3(league_info_file_key)
+
+    current_week = int(league_info['current_week'])
+    start_week = int(league_info['start_week'])
+    today = datetime.now(pytz.timezone('US/Pacific')).date()
+    weekday = today.weekday()
+
+    # default week is current week
+    default_week = current_week
+
+    # but if it is Mon, set default week to previous week
+    if weekday < 1:
+        default_week -= 1
+
+    # if default week is less than start week, set it to start week
+    if default_week < start_week:
+        default_week = start_week
+
+    return default_week
+
 def get_forecast_week(league_id):
     season = get_season()
     league_info_file_key = f"{season}/{league_id}/league_info.json"
-    league_info = s3op.load_json_from_s3(league_info_file_key)
+    league_info, last_updated = s3op.load_json_from_s3(league_info_file_key)
 
     current_week = int(league_info['current_week'])
     end_week = int(league_info['end_week'])
@@ -48,7 +71,7 @@ def get_forecast_week(league_id):
 def get_league_info(league_id):
     season = get_season()
     league_info_file_key = f"{season}/{league_id}/league_info.json"
-    league_info = s3op.load_json_from_s3(league_info_file_key)
+    league_info, last_updated = s3op.load_json_from_s3(league_info_file_key)
     return league_info
 
 def get_task_id(league_id, week):

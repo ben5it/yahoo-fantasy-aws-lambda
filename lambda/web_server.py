@@ -87,15 +87,15 @@ def lambda_handler(event, context):
     elif path == '/api/getdata':
 
         qs  = event.get('queryStringParameters')
-        if 'league_id' not in qs or 'week' not in qs :
-            logger.error('Missing parameters in query string, requirede parameters: league_id, week')
+        if 'league_id' not in qs:
+            logger.error('Missing required parameter "league_id" in query string')
             return {
                 'statusCode': 400,
-                'body': json.dumps('Missing parameters in query string, requirede parameters: league_id, week')
+                'body': json.dumps('Missing required parameter "league_id" in query string')
             }  
     
         league_id = int(qs['league_id'])
-        week = int (qs['week'])
+        week = int(qs['week']) if 'week' in qs else utils.get_default_week(league_id)
         season = utils.get_season()
         taskId = f"task_{season}_{league_id:08d}_{week:02d}"
         parms = {

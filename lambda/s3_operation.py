@@ -5,7 +5,6 @@ import boto3
 import json
 import os
 import pandas as pd
-
 import config as cfg
 
 logger = cfg.logger
@@ -17,20 +16,26 @@ def load_json_from_s3(file_key):
     file_key = 'data/' + file_key
         
     logger.debug(f"Try to get file {file_key} from s3 bucket {bucket_name}.")
-    s3 = boto3.resource('s3')
-     
+    s3 = boto3.client('s3')
+    
     try:
-        obj = s3.Object(bucket_name, file_key)
-        body = obj.get()['Body'].read().decode('utf-8')
-        json_content = json.loads(body)
-        logger.debug(f"Successfully't get object {file_key} from bucket {bucket_name}.")
-        logger.debug(json_content)
-        return json_content
-
+        # Get the object metadata
+        head_response = s3.head_object(Bucket=bucket_name, Key=file_key)
+        last_modified = head_response['LastModified']
+        
+        # Get the object content
+        response = s3.get_object(Bucket=bucket_name, Key=file_key)
+        content = response['Body'].read().decode('utf-8')
+        json_data = json.loads(content)
+        
+        return json_data, last_modified
+    
+    except s3.exceptions.NoSuchKey:
+        print(f"The file {file_key} does not exist in the bucket {bucket_name}.")
+        return None, None
     except Exception as e:
-        logger.debug(f"Couldn't get object {file_key} from bucket {bucket_name}.")
-        logger.debug(e)
-        return None
+        print(f"An error occurred: {e}")
+        return None, None
 
 def write_json_to_s3(json_data, file_key):
 

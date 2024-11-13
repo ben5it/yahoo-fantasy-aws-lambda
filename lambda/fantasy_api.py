@@ -3,8 +3,9 @@
 import json
 import objectpath
 import pandas as pd
+import pytz
 import requests
-
+from datetime import datetime, timedelta
 
 import config as cfg
 import s3_operation as s3op
@@ -63,8 +64,14 @@ def get_league_teams(league_key, league_id):
     # otherwise retirive from yahoo and save to s3
     season = utils.get_season()
     file_path = f"{season}/{league_id}/teams.json"
-    teams = s3op.load_json_from_s3(file_path)
-    if teams is not None:
+    teams, last_updated = s3op.load_json_from_s3(file_path)
+
+    # Check if the data is less than one day old
+    # because users can change the team name and logo
+    now = datetime.now(pytz.UTC)
+    time_difference = now - last_updated
+    if teams and time_difference < timedelta(days=1):
+        logger.debug("Using cached teams data")
         logger.debug(json.dumps(teams, indent=4))  
     else:
         logger.debug("Try to retrive leagues teams from yahoo.")
@@ -215,8 +222,14 @@ def get_game_stat_categories():
     # if data already cached in s3, read from s3;
     # otherwise retirive from yahoo and save to s3
     file_path = 'game_stat_categories.json'
-    categories = s3op.load_json_from_s3(file_path)
-    if categories is not None:
+    categories, last_updated = s3op.load_json_from_s3(file_path)
+
+    # Check if the data is less than one year old
+    # because the game stat categories rarely change
+    now = datetime.now(pytz.UTC)
+    time_difference = now - last_updated
+    if categories and time_difference < timedelta(days=365):
+        logger.debug("Using cached game stat category data")
         logger.debug(json.dumps(categories, indent=4))  
     else:
         logger.debug("Try to retrive game stat categories from yahoo.")

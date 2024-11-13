@@ -44,7 +44,7 @@ def lambda_handler(event, context):
     league_key = league_info['league_key']
 
     task_id = utils.get_task_id(league_id, week)
-    update_status(task_id, { "state": 'INITIATED' })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 1 })
    
     game_stat_categories = fapi.get_game_stat_categories()
     teams = fapi.get_league_teams(league_key, league_id)
