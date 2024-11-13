@@ -4,7 +4,7 @@
     <div v-if="currentLeague">
       <h3 class="text-center my-3">{{ currentLeague.name }}</h3>
       <div v-if="analysisResult">
-        <h4 class="text-center my-4">Analysis Result</h4>
+        <h4 class="text-center my-4">Week {{ analysisResult.week }} Analysis Result</h4>
         <ul class="nav nav-tabs">
           <li class="nav-item">
             <a class="nav-link" :class="{ active: activeTab === 'roto-week' }" @click="activeTab = 'roto-week'">Roto-Week</a>
@@ -100,9 +100,13 @@ export default {
       }
     };
 
+    if (currentLeague) {
+        fetchData();
+    }
+
     onMounted(() => {
       if (currentLeague) {
-        intervalId.value = setInterval(fetchData, 5000);
+        intervalId.value = setInterval(fetchData, 3000);
       }
     });
 

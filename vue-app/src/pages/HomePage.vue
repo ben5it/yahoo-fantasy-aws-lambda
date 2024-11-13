@@ -59,7 +59,6 @@
 <script>
 import { inject } from 'vue';
 import { useRouter } from 'vue-router';
-// import axios from '../axios';
 
 export default {
   name: "HomePage",

@@ -31,7 +31,7 @@
 
 
 <script>
-import { inject, ref, onMounted } from "vue";
+import { inject, ref, onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 
 
@@ -52,15 +52,17 @@ export default {
       }
     };
 
+    fetchLeagues();
+
     const analyzeLeague = (league) => {
       // Store the current league information globally
       leagueStore.setCurrentLeague(league);
       router.push("/result");
     };
 
-    onMounted(() => {
-      fetchLeagues();
-    });
+    // onBeforeMount(() => {
+    //   fetchLeagues();
+    // });
 
     return {
       leagues,

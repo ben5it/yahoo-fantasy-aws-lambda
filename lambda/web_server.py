@@ -130,7 +130,7 @@ def lambda_handler(event, context):
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
             # so this should be either 'INITIATED' or 'IN PROGRESS', no need to run again
             else: 
-                if now - last_updated > 60: # if there is no update in more than 1 minute, then maybe a problem already occurs, need to rerun
+                if now - last_updated > 120: # if there is no update in more than 2 minutes, then maybe a problem already occurs, need to rerun
                     return run_analysis(parms)
                 else:
                     return {
@@ -247,7 +247,7 @@ def get_result(league_id, week):
     result_excel_file_key = prefix + f"{league_id}_{week}_result.xlsx"
 
     # bar chart file path
-    roto_week_bar_file_path = prefix + f"roto_bar_w{week:02d}.png"
+    roto_week_bar_file_path = prefix + f"roto_bar_wk{week:02d}.png"
     roto_total_bar_file_path = prefix + "roto_bar_total.png"
 
     radar_chart_teams = get_files_with_pattern(prefix, "radar_team_")

@@ -112,6 +112,9 @@ Resources:
             QueryString: false
             Cookies:
                 Forward: all
+          MinTTL: 0
+          MaxTTL: 0
+          DefaultTTL: 0
         CacheBehaviors:
           - PathPattern: '/login'
             TargetOriginId: ApiGatewayOrigin
@@ -128,10 +131,6 @@ Resources:
               QueryString: false
               Cookies:
                 Forward: none
-              Headers:
-                - Origin
-                - Access-Control-Request-Method
-                - Access-Control-Request-Headers
             MinTTL: 0
             MaxTTL: 0
             DefaultTTL: 0
@@ -150,10 +149,6 @@ Resources:
               QueryString: true
               Cookies:
                 Forward: all
-              Headers:
-                - Origin
-                - Access-Control-Request-Method
-                - Access-Control-Request-Headers
             MinTTL: 0
             MaxTTL: 0
             DefaultTTL: 0
@@ -172,10 +167,6 @@ Resources:
               QueryString: false
               Cookies:
                 Forward: all
-              Headers:
-                - Origin
-                - Access-Control-Request-Method
-                - Access-Control-Request-Headers
             MinTTL: 0
             MaxTTL: 0
             DefaultTTL: 0
@@ -194,10 +185,6 @@ Resources:
               QueryString: false
               Cookies:
                 Forward: all
-              Headers:
-                - Origin
-                - Access-Control-Request-Method
-                - Access-Control-Request-Headers
             MinTTL: 0
             MaxTTL: 0
             DefaultTTL: 0
@@ -216,10 +203,6 @@ Resources:
               QueryString: true
               Cookies:
                 Forward: all
-              Headers:
-                - Origin
-                - Access-Control-Request-Method
-                - Access-Control-Request-Headers
             MinTTL: 0
             MaxTTL: 0
             DefaultTTL: 0
