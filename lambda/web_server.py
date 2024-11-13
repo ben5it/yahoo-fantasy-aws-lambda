@@ -262,7 +262,7 @@ def get_result(league_id, week):
             "bar_chart_week": base_url+ roto_week_bar_file_path,
             "bar_chart_total": base_url + roto_total_bar_file_path,
             "radar_chart_teams": [ base_url + file_key for file_key in radar_chart_teams ],
-            "radar_chart_forcast": [ base_url + file_key for file_key in radar_chart_forcast ]
+            "radar_chart_forecast": [ base_url + file_key for file_key in radar_chart_forcast ]
         }
     }
 
