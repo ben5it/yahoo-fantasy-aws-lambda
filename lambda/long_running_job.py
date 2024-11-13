@@ -49,17 +49,17 @@ def lambda_handler(event, context):
     game_stat_categories = fapi.get_game_stat_categories()
     teams = fapi.get_league_teams(league_key, league_id)
     team_keys = list(map(lambda x: x['team_key'], teams))
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 5 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 5 })
 
     total_df, sort_orders = fapi.get_league_stats(team_keys, game_stat_categories, 0)
     week_df, sort_orders  = fapi.get_league_stats(team_keys, game_stat_categories, week)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 10 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 10 })
     
     week_score = cmpt.stat_to_score(week_df, sort_orders)
     total_score = cmpt.stat_to_score(total_df, sort_orders)
     matchup_arr, matchup_dict = fapi.get_league_matchup(team_keys, week)
     battle_score = cmpt.roto_score_to_battle_score(week_score, matchup_dict)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 20 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 20 })
 
     season = utils.get_season()
     # write data frame to cvs on S3
@@ -88,24 +88,24 @@ def lambda_handler(event, context):
     styled_dfs = [styled_battle_score, styled_week_score, styled_week_stats, styled_total_score, styled_total_stats]
     sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
     s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 25 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 25 })
 
     forecast_week = utils.get_forecast_week(league_id)
     next_matchup_arr, next_matchup_dict = fapi.get_league_matchup(team_keys, forecast_week)
     matchup_file_path = f"{season}/{league_id}/{forecast_week}/matchup.json"
     s3op.write_json_to_s3(next_matchup_arr, matchup_file_path)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 30 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 30 })
 
     league_name = utils.get_league_info(league_id)['name']
     week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
     roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_wk{week:02d}.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 35 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 35 })
 
     total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
     roto_total_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_total.png"
     s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
-    update_status(task_id, { "state": 'IN PROGRESS', "percentage": 40 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 40 })
 
     # radar chart for each team
     team_num = len(team_keys)
@@ -114,14 +114,14 @@ def lambda_handler(event, context):
     for idx, img_data in enumerate(radar_charts):
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-        update_status(task_id, { "state": 'IN PROGRESS', "percentage": int( (idx+1) * step + 40) })
+        update_status(task_id, { "state": 'IN_PROGRESS', "percentage": int( (idx+1) * step + 40) })
 
     # matchup forecast for next week
     next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchup_arr, forecast_week)
     for idx, img_data in enumerate(next_matchup_charts):
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-        update_status(task_id, { "state": 'IN PROGRESS', "percentage": int( (idx+1) * step + 80) })
+        update_status(task_id, { "state": 'IN_PROGRESS', "percentage": int( (idx+1) * step + 80) })
     update_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
 

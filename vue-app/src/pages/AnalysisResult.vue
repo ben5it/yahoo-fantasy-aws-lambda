@@ -1,11 +1,10 @@
 <template>
   <div class="container">
-    <h2 class="text-center my-4">Analysis Result</h2>
+
     <div v-if="currentLeague">
-      <h3>{{ currentLeague.name }}</h3>
-      <p>Type: {{ currentLeague.scoring_type }}</p>
-      <p>Status: {{ currentLeague.draft_status }}</p>
+      <h3 class="text-center my-3">{{ currentLeague.name }}</h3>
       <div v-if="analysisResult">
+        <h4 class="text-center my-4">Analysis Result</h4>
         <ul class="nav nav-tabs">
           <li class="nav-item">
             <a class="nav-link" :class="{ active: activeTab === 'roto-week' }" @click="activeTab = 'roto-week'">Roto-Week</a>
@@ -62,8 +61,8 @@
           </div>s
         </div>
       </div>
-      <div v-else>
-        <p>Loading data... {{ percentage }}%</p>
+      <div v-else class="d-flex justify-content-center align-items-center" style="height: 200px;">
+        <p>Loading data from yahoo and analyzing... <span v-if="percentage !== null">{{ percentage }}%</span></p>
       </div>
     </div>
     <div v-else>
