@@ -39,14 +39,16 @@
             <img v-if="activeTab === 'roto-total'" :src="analysisResult.result.bar_chart_total" alt="Bar Chart Total" class="img-fluid">
           </div>
           <div v-if="activeSubTab === 'point'">
-            <p>Point Data</p>
+            <iframe v-if="activeTab === 'roto-week'" :src="analysisResult.result.roto_point_week" width="100%" height="1600px" frameborder="0"></iframe>
+            <iframe v-if="activeTab === 'roto-total'" :src="analysisResult.result.roto_point_total" width="100%" height="1600px" frameborder="0"></iframe>
           </div>
           <div v-if="activeSubTab === 'stats'">
-            <p>Stats Data</p>
+            <iframe v-if="activeTab === 'roto-week'" :src="analysisResult.result.roto_stats_week" width="100%" height="1600px" frameborder="0"></iframe>
+            <iframe v-if="activeTab === 'roto-total'" :src="analysisResult.result.roto_stats_total" width="100%" height="1600px" frameborder="0"></iframe>
           </div>
         </div>
         <div v-else-if="activeTab === 'h2h-matchup'">
-          <p>H2H Matchup Data</p>
+          <iframe :src="analysisResult.result.h2h_matchup_week" width="100%" height="1600px" frameborder="0"></iframe>
         </div>
         <div v-else-if="activeTab === 'team-radar'" class="row">
             <h5 class="text-center my-4">Comparision between total and week for each team.</h5>
@@ -87,7 +89,7 @@ export default {
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`/api/getdata?league_id=${currentLeague.league_id}&week=${currentLeague.current_week}`);
+        const response = await fetch(`/api/getdata?league_id=${currentLeague.league_id}`);
         const data = await response.json();
         if (data.state === 'COMPLETED') {
           analysisResult.value = data;

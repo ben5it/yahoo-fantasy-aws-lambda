@@ -2,6 +2,7 @@
 
 from io import StringIO, BytesIO
 import boto3
+# import imgkit
 import json
 import os
 import pandas as pd
@@ -128,3 +129,77 @@ def write_image_to_s3(img_data, file_key):
         logger.debug(f"Successfully saved image to {bucket_name}/{file_key}")
     except Exception as e:
         logger.debug(f"An error occurred: {e}")
+
+# Configure imgkit to use wkhtmltopdf
+# config = imgkit.config(wkhtmltoimage='/usr/local/bin/wkhtmltoimage')  # Adjust path if needed
+
+
+# def write_styled_dataframe_to_image_on_s3(styled_df, file_key):
+
+#     bucket_name = os.environ.get("DATA_BUCKET_NAME")
+    
+#     file_key = 'data/' + file_key
+
+#     # Convert styled DataFrame to HTML with inline CSS for font and column width
+#     html = styled_df.set_table_attributes('class="table table-striped table-sm"').to_html(index=True)
+
+#     # Add CSS to center the caption
+#     html = f"""
+#     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">  
+#     <div class="container" style="width: 600px;"> 
+#     {html}
+#     </div>
+#     """
+    
+#     # Convert the styled DataFrame to an image
+#     temp_file_path = '/tmp/styled_dataframe.png'
+
+#     # Convert HTML to image using imgkit
+#     imgkit.from_string(html, temp_file_path, config=config)
+
+#     # Read the temporary file into a BytesIO object
+#     with open(temp_file_path, 'rb') as f:
+#         buf = BytesIO(f.read())
+
+#     s3 = boto3.client('s3')
+#     # Upload image to S3
+#     s3.put_object(Bucket=bucket_name, Key=file_key, Body=buf.getvalue(), ContentType='image/png')
+
+#     logger.debug(f"File uploaded to S3 at s3://{bucket_name}/{file_key}")
+
+
+def write_styled_dataframe_to_html_on_s3(styled_df, file_key):
+    bucket_name = os.environ.get("DATA_BUCKET_NAME")
+    file_key = 'data/' + file_key
+
+    # Convert styled DataFrame to HTML with inline CSS for font and column width
+    html_data = styled_df.set_table_attributes('class="table table-striped table-sm"').to_html()
+
+    html_data = f"""
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>鸭虎饭特稀</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">   
+    </head>
+    <body>
+        <div class="container">
+        {html_data}
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    </body>
+    </html>
+    """
+
+    s3 = boto3.resource('s3')
+    try:
+        s3.Object(bucket_name, file_key).put(Body=html_data, ContentType='text/html')
+        logger.debug(f"Successfully saved HTML to {bucket_name}/{file_key}")
+    except Exception as e:
+        logger.debug(f"An error occurred: {e}")
+
+    logger.debug(f"File uploaded to S3 at s3://{bucket_name}/{file_key}")

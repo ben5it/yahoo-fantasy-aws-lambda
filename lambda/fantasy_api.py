@@ -3,9 +3,8 @@
 import json
 import objectpath
 import pandas as pd
-import pytz
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import config as cfg
 import s3_operation as s3op
@@ -66,40 +65,41 @@ def get_league_teams(league_key, league_id):
     file_path = f"{season}/{league_id}/teams.json"
     teams, last_updated = s3op.load_json_from_s3(file_path)
 
-    # Check if the data is less than one day old
-    # because users can change the team name and logo
-    now = datetime.now(pytz.UTC)
-    time_difference = now - last_updated
-    if teams and time_difference < timedelta(days=1):
-        logger.debug("Using cached teams data")
-        logger.debug(json.dumps(teams, indent=4))  
-    else:
-        logger.debug("Try to retrive leagues teams from yahoo.")
-        uri = f"league/{league_key}/teams"
-        resp = make_request(uri)
-        t = objectpath.Tree(resp)
-        jfilter = t.execute('$..teams..team..(team_key, team_id, name, team_logos)')
-        teams = []
+    if teams and last_updated:
+        # Check if the data is less than one day old,
+        # because users can change the team name and logo frequently
+        now = datetime.now(timezone.utc)
+        time_difference = now - last_updated
+        if time_difference < timedelta(days=1):
+            logger.debug("Using cached teams data")
+            return teams
+        
+    logger.debug("Try to retrive leagues teams from yahoo.")
+    uri = f"league/{league_key}/teams"
+    resp = make_request(uri)
+    t = objectpath.Tree(resp)
+    jfilter = t.execute('$..teams..team..(team_key, team_id, name, team_logos)')
+    teams = []
 
-        t = {}
-        for p in jfilter:
-            # logger.debug(p)
-            if ('team_logos' in p):
-                t['team_logos'] = p['team_logos'][0]['team_logo']['url']
-            else:
-                t.update(p)
+    t = {}
+    for p in jfilter:
+        # logger.debug(p)
+        if ('team_logos' in p):
+            t['team_logos'] = p['team_logos'][0]['team_logo']['url']
+        else:
+            t.update(p)
 
-            # team logo is the last property
-            if ('team_logos' in t):
-                teams.append(t)
-                t = {} 
+        # team logo is the last property
+        if ('team_logos' in t):
+            teams.append(t)
+            t = {} 
 
-        # # sort by team id
-        teams.sort(key = lambda team : int(team['team_id']))
+    # # sort by team id
+    teams.sort(key = lambda team : int(team['team_id']))
 
-        logger.debug('teams')
-        logger.debug(teams)
-        s3op.write_json_to_s3(teams, file_path)
+    logger.debug('teams')
+    logger.debug(teams)
+    s3op.write_json_to_s3(teams, file_path)
     
     return teams
 
@@ -219,33 +219,35 @@ def get_game_stat_categories():
     '''
     logger.debug("get_game_stat_categories")
     
-    # if data already cached in s3, read from s3;
+    # if data already cached in s3 recently, read from s3;
     # otherwise retirive from yahoo and save to s3
     file_path = 'game_stat_categories.json'
     categories, last_updated = s3op.load_json_from_s3(file_path)
 
-    # Check if the data is less than one year old
-    # because the game stat categories rarely change
-    now = datetime.now(pytz.UTC)
-    time_difference = now - last_updated
-    if categories and time_difference < timedelta(days=365):
-        logger.debug("Using cached game stat category data")
-        logger.debug(json.dumps(categories, indent=4))  
-    else:
-        logger.debug("Try to retrive game stat categories from yahoo.")
-        categories = {}
-        uri = 'game/nba/stat_categories'
-        resp = make_request(uri)
-        t = objectpath.Tree(resp)
-        jfilter = t.execute('$..stat_categories..stats..(stat_id, display_name, sort_order)')
+    if categories and last_updated:
+        # Check if the data is less than one year old
+        # because the game stat categories rarely change
+        now = datetime.now(timezone.utc)
+        time_difference = now - last_updated
+        if time_difference < timedelta(days=365):
+            logger.debug("Using cached game stat category data")
+            logger.debug(json.dumps(categories, indent=4))
+            return categories
+        
+    logger.debug("Try to retrive game stat categories from yahoo.")
+    categories = {}
+    uri = 'game/nba/stat_categories'
+    resp = make_request(uri)
+    t = objectpath.Tree(resp)
+    jfilter = t.execute('$..stat_categories..stats..(stat_id, display_name, sort_order)')
 
-        for c in jfilter:
-            if 'stat_id' in c and 'display_name' in c and 'sort_order' in c:
-                categories[c['stat_id']] = c
+    for c in jfilter:
+        if 'stat_id' in c and 'display_name' in c and 'sort_order' in c:
+            categories[c['stat_id']] = c
 
-        logger.debug('categories')
-        logger.debug(categories)
-        s3op.write_json_to_s3(categories, file_path)
+    logger.debug('categories')
+    logger.debug(categories)
+    s3op.write_json_to_s3(categories, file_path)
     
     return categories
 

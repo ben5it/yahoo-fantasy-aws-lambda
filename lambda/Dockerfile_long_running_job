@@ -1,14 +1,21 @@
 # Use the official Python image from the Docker Hub
 FROM public.ecr.aws/lambda/python:3.11
 
-# Copy shared code
-COPY config.py fantasy_api.py s3_operation.py utils.py ${LAMBDA_TASK_ROOT}/
+
+# Install dependencies and wkhtmltopdf (which includes wkhtmltoimage)
+# This RPM version installs both wkhtmltopdf and wkhtmltoimage into /usr/local/bin
+RUN yum install -y https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox-0.12.5-1.centos7.x86_64.rpm \
+    && yum clean all
+
 
 # Copy requirements.txt
 COPY requirements_long_running_job.txt ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Install the specified packages
 RUN pip install -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# Copy shared code
+COPY config.py fantasy_api.py s3_operation.py utils.py ${LAMBDA_TASK_ROOT}/
 
 # Copy function code
 COPY long_running_job.py chart.py compute.py ${LAMBDA_TASK_ROOT}/

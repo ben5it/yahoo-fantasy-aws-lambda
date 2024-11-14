@@ -23,6 +23,9 @@
         </div>
       </div>
     </div>
+    <div v-else-if="leagues === null">
+      <p class="text-center">Retrieving leagues...</p>
+    </div>
     <div v-else>
       <p class="text-center">No leagues available.</p>
     </div>
@@ -38,7 +41,7 @@ import { useRouter } from "vue-router";
 export default {
   name: "LeagueListPage",
   setup() {
-    const leagues = ref([]);
+    const leagues = ref(null);
     const leagueStore = inject('leagueStore');
     const router = useRouter();
 
@@ -48,6 +51,7 @@ export default {
         const data = await response.json();
         leagues.value = data;
       } catch (error) {
+        leagues.value = [];
         console.error("Error fetching leagues:", error);
       }
     };

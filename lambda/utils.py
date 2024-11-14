@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from decimal import Decimal
 import base64
 import boto3
 import json
 import os
-import pytz
 import requests
 import time
 import config as cfg
@@ -32,7 +31,12 @@ def get_default_week(league_id):
 
     current_week = int(league_info['current_week'])
     start_week = int(league_info['start_week'])
-    today = datetime.now(pytz.timezone('US/Pacific')).date()
+
+    # Define the Pacific timezone offset
+    pacific_offset = timedelta(hours=-8)
+    pacific_timezone = timezone(pacific_offset)
+    
+    today = datetime.now(pacific_timezone).date()
     weekday = today.weekday()
 
     # default week is current week
@@ -55,7 +59,12 @@ def get_forecast_week(league_id):
 
     current_week = int(league_info['current_week'])
     end_week = int(league_info['end_week'])
-    today = datetime.now(pytz.timezone('US/Pacific')).date()
+
+    # Define the Pacific timezone offset
+    pacific_offset = timedelta(hours=-8)
+    pacific_timezone = timezone(pacific_offset)
+    
+    today = datetime.now(pacific_timezone).date()
     weekday = today.weekday()
 
     forecast_week = current_week + 1

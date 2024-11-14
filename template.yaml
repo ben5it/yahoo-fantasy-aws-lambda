@@ -83,7 +83,30 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
-
+# CloudFront Cache Policy that forwards the Content-Type header
+  S3OriginCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: StaticWebsiteCachePolicy
+        # DefaultTTL: 86400 # 1 day
+        # MaxTTL: 31536000 # 1 year
+        # MinTTL: 60 # 1 minute
+        MinTTL: 60
+        MaxTTL: 60
+        DefaultTTL: 60
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - "Content-Type" # Ensure Content-Type header is forwarded to respect S3 MIME types
+          CookiesConfig:
+            CookieBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+              
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -108,13 +131,8 @@ Resources:
           CachedMethods:
             - GET
             - HEAD
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-                Forward: all
-          MinTTL: 0
-          MaxTTL: 0
-          DefaultTTL: 0
+          Compress: true
+          CachePolicyId: !Ref S3OriginCachePolicy # Use custom cache policy with Content-Type header
         CacheBehaviors:
           - PathPattern: '/login'
             TargetOriginId: ApiGatewayOrigin

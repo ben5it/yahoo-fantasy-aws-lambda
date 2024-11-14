@@ -4,7 +4,7 @@
 BUCKET_NAME="yahoo-fantasy-website"
 
 # Delete all files and folders under the bucket except the data folder
-aws s3 rm s3://$BUCKET_NAME --recursive --exclude "data/*" --include "*"
+aws s3 rm s3://$BUCKET_NAME --recursive --exclude "data/*"
 
 # Sync JavaScript files with the correct MIME type
 aws s3 sync dist/assets s3://$BUCKET_NAME/assets --exclude "*" --include "*.js" --content-type "application/javascript"

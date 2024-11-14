@@ -83,11 +83,27 @@ def lambda_handler(event, context):
     styled_week_stats = apply_style_for_roto_df(week_df, f'Stats - Week {week}')
     styled_total_score = apply_style_for_roto_df(total_score, 'Roto Points - Total')
     styled_total_stats = apply_style_for_roto_df(total_df, 'Stats - Total')
-    result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
 
+    # write to excel
+    result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
     styled_dfs = [styled_battle_score, styled_week_score, styled_week_stats, styled_total_score, styled_total_stats]
     sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
     s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
+
+    # roto_point_week_table_file_path = f"{season}/{league_id}/{week}/roto_point_wk{week:02d}.png"
+    # s3op.write_styled_dataframe_to_image_on_s3(styled_week_score, roto_point_week_table_file_path)
+
+    # write to html
+    roto_point_week_html_file_path = f"{season}/{league_id}/{week}/roto_point_wk{week:02d}.html"
+    roto_stats_week_html_file_path = f"{season}/{league_id}/{week}/roto_stats_wk{week:02d}.html"
+    roto_point_total_html_file_path = f"{season}/{league_id}/{week}/roto_point_total.html"
+    roto_stats_total_html_file_path = f"{season}/{league_id}/{week}/roto_stats_total.html"
+    h2h_matchup_week_html_file_path = f"{season}/{league_id}/{week}/h2h_matchup_wk{week:02d}.html"
+    s3op.write_styled_dataframe_to_html_on_s3(styled_week_score, roto_point_week_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_week_stats, roto_stats_week_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_total_score, roto_point_total_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_total_stats, roto_stats_total_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_battle_score, h2h_matchup_week_html_file_path)
     update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 25 })
 
     forecast_week = utils.get_forecast_week(league_id)

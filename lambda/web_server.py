@@ -246,6 +246,12 @@ def get_result(league_id, week):
     # result excel file key
     result_excel_file_key = prefix + f"{league_id}_{week}_result.xlsx"
 
+    roto_point_week_html_file_path = prefix + f"roto_point_wk{week:02d}.html"
+    roto_stats_week_html_file_path = prefix + f"roto_stats_wk{week:02d}.html"
+    roto_point_total_html_file_path = prefix + f"roto_point_total.html"
+    roto_stats_total_html_file_path = prefix + f"roto_stats_total.html"
+    h2h_matchup_week_html_file_path = prefix + f"h2h_matchup_wk{week:02d}.html"
+
     # bar chart file path
     roto_week_bar_file_path = prefix + f"roto_bar_wk{week:02d}.png"
     roto_total_bar_file_path = prefix + "roto_bar_total.png"
@@ -258,6 +264,11 @@ def get_result(league_id, week):
         "league_id": league_id,
         "week": week,
         "result": {
+            "roto_point_week": base_url + roto_point_week_html_file_path,
+            "roto_stats_week": base_url + roto_stats_week_html_file_path,
+            "roto_point_total": base_url + roto_point_total_html_file_path,
+            "roto_stats_total": base_url + roto_stats_total_html_file_path,
+            "h2h_matchup_week": base_url + h2h_matchup_week_html_file_path,
             "result_excel": base_url+ result_excel_file_key,
             "bar_chart_week": base_url+ roto_week_bar_file_path,
             "bar_chart_total": base_url + roto_total_bar_file_path,

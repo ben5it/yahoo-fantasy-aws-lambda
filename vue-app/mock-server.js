@@ -142,49 +142,51 @@ app.get("/api/getdata", (req, res) => {
       getDataCalled = 0;
 
       res.json({
-        state: "COMPLETED",
-        league_id: 29689,
-        week: 3,
-        result: {
-          result_excel:
-            "https://fantasy.laohuang.org/data/2024/29689/3/29689_3_result.xlsx",
-          bar_chart_week:
-            "https://fantasy.laohuang.org/data/2024/29689/3/roto_bar_wk03.png",
-          bar_chart_total:
-            "https://fantasy.laohuang.org/data/2024/29689/3/roto_bar_total.png",
-          radar_chart_teams: [
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_01.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_02.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_03.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_04.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_05.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_06.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_07.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_08.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_09.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_10.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_11.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_12.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_13.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_14.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_15.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_16.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_17.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_team_18.png",
-          ],
-          radar_chart_forecast: [
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_01.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_02.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_03.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_04.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_05.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_06.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_07.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_08.png",
-            "https://fantasy.laohuang.org/data/2024/29689/3/radar_forecast_09.png",
-          ],
-        },
-      });
+        "state": "COMPLETED",
+        "league_id": 29689,
+        "week": 4,
+        "result": {
+            "roto_point_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_point_wk04.html",
+            "roto_stats_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_stats_wk04.html",
+            "roto_point_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_point_total.html",
+            "roto_stats_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_stats_total.html",
+            "h2h_matchup_week": "https://fantasy.laohuang.org/data/2024/29689/4/h2h_matchup_wk04.html",
+            "result_excel": "https://fantasy.laohuang.org/data/2024/29689/4/29689_4_result.xlsx",
+            "bar_chart_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_bar_wk04.png",
+            "bar_chart_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_bar_total.png",
+            "radar_chart_teams": [
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_01.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_02.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_03.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_04.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_05.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_06.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_07.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_08.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_09.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_10.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_11.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_12.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_13.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_14.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_15.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_16.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_17.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_18.png"
+            ],
+            "radar_chart_forecast": [
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_01.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_02.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_03.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_04.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_05.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_06.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_07.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_08.png",
+                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_09.png"
+            ]
+        }
+    });
     } else {
       res.json({ state: "IN_PROGRESS", percentage: percentage });
     }
