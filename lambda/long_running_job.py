@@ -68,7 +68,6 @@ def lambda_handler(event, context):
     # week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
     # week_score_csv_file_key = f"{season}/{league_id}/{week}/roto-point.csv"
     # week_battle_csv_file_key = f"{season}/{league_id}/{week}/h2h-score.csv"
-
     # s3op.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
     # s3op.write_dataframe_to_csv_on_s3(total_score, total_score_csv_file_key)
     # s3op.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
@@ -89,9 +88,7 @@ def lambda_handler(event, context):
     styled_dfs = [styled_battle_score, styled_week_score, styled_week_stats, styled_total_score, styled_total_stats]
     sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
     s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
-
-    # roto_point_week_table_file_path = f"{season}/{league_id}/{week}/roto_point_wk{week:02d}.png"
-    # s3op.write_styled_dataframe_to_image_on_s3(styled_week_score, roto_point_week_table_file_path)
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 30 })
 
     # write to html
     roto_point_week_html_file_path = f"{season}/{league_id}/{week}/roto_point_wk{week:02d}.html"
@@ -103,41 +100,40 @@ def lambda_handler(event, context):
     s3op.write_styled_dataframe_to_html_on_s3(styled_week_stats, roto_stats_week_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_total_score, roto_point_total_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_total_stats, roto_stats_total_html_file_path)
-    s3op.write_styled_dataframe_to_html_on_s3(styled_battle_score, h2h_matchup_week_html_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 25 })
+    s3op.write_styled_dataframe_to_html_on_s3(styled_battle_score, h2h_matchup_week_html_file_path, False)
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 35 })
 
     forecast_week = utils.get_forecast_week(league_id)
     next_matchup_arr, next_matchup_dict = fapi.get_league_matchup(team_keys, forecast_week)
     matchup_file_path = f"{season}/{league_id}/{forecast_week}/matchup.json"
     s3op.write_json_to_s3(next_matchup_arr, matchup_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 30 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 45 })
 
     league_name = utils.get_league_info(league_id)['name']
     week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
     roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_wk{week:02d}.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 35 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 50 })
 
     total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
     roto_total_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_total.png"
     s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 40 })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 55 })
 
     # radar chart for each team
-    team_num = len(team_keys)
-    step = 40 / team_num
     radar_charts = chart.league_radar_charts(week_score, total_score, week)
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 70 })
     for idx, img_data in enumerate(radar_charts):
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-        update_status(task_id, { "state": 'IN_PROGRESS', "percentage": int( (idx+1) * step + 40) })
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 80 })
 
     # matchup forecast for next week
     next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchup_arr, forecast_week)
+    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 90 })
     for idx, img_data in enumerate(next_matchup_charts):
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-        update_status(task_id, { "state": 'IN_PROGRESS', "percentage": int( (idx+1) * step + 80) })
     update_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
 
@@ -239,7 +235,7 @@ def highlight_last_three_columns(s):
     pandas.Series
         The styled Series with the last three columns highlighted.
     """
-    return ['background-color: black; color: lawngreen; border-color: white' if i >= len(s) - 3 else '' for i in range(len(s))]
+    return ['background-color: black; color: lawngreen; border-color: black' if i >= len(s) - 3 else '' for i in range(len(s))]
 
 
 def remove_trailing_zeros(x):

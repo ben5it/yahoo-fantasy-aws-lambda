@@ -7,5 +7,4 @@ requests
 s3fs
 openpyxl
 Jinja2
-imgkit
 debugpy

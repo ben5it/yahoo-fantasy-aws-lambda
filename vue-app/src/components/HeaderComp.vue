@@ -11,11 +11,11 @@
         <router-link to="/contact">Contact</router-link>
       </div>
       <div class="user-icon-container" v-if="auth.state.authenticated">
-        <img :src="auth.state.user.profile_image" alt="User Icon" class="user-icon" @mouseover="showPopup = true" @mouseleave="showPopup = false">
-        <div class="user-popup" v-if="showPopup">
+        <img :src="auth.state.user.profile_image" alt="User Icon" class="user-icon" @mouseover="showUserPopup = true" @mouseleave="showUserPopup = false">
+        <div class="user-popup" v-if="showUserPopup">
           <p>Nickname: {{ auth.state.user.nickname }}</p>
           <p>Email: {{ auth.state.user.email }}</p>
-          <router-link to="/signout">Sign Out</router-link>
+          <!-- <router-link to="/signout">Sign Out</router-link> -->
         </div>
       </div>
     </nav>
@@ -31,7 +31,7 @@ export default {
   setup() {
     const auth = inject('auth');
     const router = useRouter();
-    const showPopup = ref(false);
+    const showUserPopup = ref(false);
 
     const logout = () => {
       // Implement your logout logic here
@@ -43,7 +43,7 @@ export default {
 
     return {
       auth,
-      showPopup,
+      showUserPopup,
       logout
     };
   }
@@ -94,7 +94,7 @@ export default {
 
 .user-popup {
   position: absolute;
-  top: 30px;
+  top: 40px;
   right: 0;
   background-color: white;
   color: black;
@@ -102,5 +102,6 @@ export default {
   border: 1px solid #ccc;
   border-radius: 5px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Ensure it appears above other elements */
 }
 </style>
