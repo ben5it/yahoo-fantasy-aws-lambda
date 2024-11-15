@@ -1,10 +1,17 @@
 <template>
   <div class="container">
-
     <div v-if="currentLeague">
       <h3 class="text-center my-3">{{ currentLeague.name }}</h3>
-      <div v-if="analysisResult">
+      <nav aria-label="..." v-if="analysisResult">
+        <ul class="pagination justify-content-end">
+          <li v-for="week in weeks" :key="week" class="page-item"
+            :class="{ active: week === analysisResult.week, disabled: week > currentLeague.current_week }">
+            <a class="page-link" href="#" @click.prevent="setWeek(week)">{{ week }}</a>
+          </li>
+        </ul>
+      </nav>
 
+      <div v-if="analysisResult">
         <ul class="nav nav-tabs">
           <li class="nav-item">
             <a class="nav-link" :class="{ active: activeTab === 'roto-week' }"
@@ -81,7 +88,7 @@
 </template>
 
 <script>
-import { ref, inject, onMounted, onUnmounted } from 'vue';
+import { ref, inject, computed, onMounted, onUnmounted, shallowReactive } from 'vue';
 
 export default {
   name: 'AnalysisResult',
@@ -115,9 +122,13 @@ export default {
       }
     }
 
-    const fetchData = async () => {
+    const fetchData = async (week) => {
       try {
-        const response = await fetch(`/api/getdata?league_id=${currentLeague.league_id}`);
+        let url = `/api/getdata?league_id=${currentLeague.league_id}`;
+        if (week) {
+          url += `&week=${week}`;
+        }
+        const response = await fetch(url);
         const data = await response.json();
         if (data.state === 'COMPLETED') {
           analysisResult.value = data;
@@ -141,9 +152,25 @@ export default {
         fetchData();
     }
 
+    const weeks = computed(() => {
+      const startWeek = parseInt(currentLeague.start_week);
+      const endWeek = currentLeague.current_week;
+      const weeksArray = [];
+      for (let week = startWeek; week <= endWeek; week++) {
+        weeksArray.push(week);
+      }
+
+      // show only last 8 weeks, otherwise it will be too long
+      if (weeksArray.length > 8) {
+        weeksArray.splice(0, weeksArray.length - 8);
+      }
+
+      return weeksArray;
+    });
+
     onMounted(() => {
       if (currentLeague) {
-        intervalId.value = setInterval(fetchData, 3000);
+        intervalId.value = setInterval(fetchData, 5000);
       }
     });
 
@@ -152,6 +179,20 @@ export default {
         clearInterval(intervalId.value);
       }
     });
+
+    const setWeek = (week) => {
+      if (week <= currentLeague.current_week) {
+        // clear the previous result
+        analysisResult.value = null; 
+        percentage.value = null;
+
+        // Call the function immediately
+        fetchData(week);
+
+        // Set the interval to call the function every 5 seconds
+        intervalId.value = setInterval(() => fetchData(week), 5000);
+      }
+    };
 
     return {
       currentLeague,
@@ -163,7 +204,9 @@ export default {
       weekRotoStatsHtml,
       totalRotoPointHtml,
       totalRotoStatsHtml,
-      h2hMatchupHtml
+      h2hMatchupHtml,
+      weeks,
+      setWeek
     };
   }
 };
