@@ -171,8 +171,32 @@ def get_league_stats(team_keys, game_stat_categories, week=0):
 
 
 
-def get_league_schedule(league_id):
-    pass
+def convert_to_number(value):
+    """
+    Convert a string to a number, handling special cases like 'INF'.
+    
+    Parameters:
+    - value: The string value to convert.
+    
+    Returns:
+    - The converted number (float or int), or float('inf') for 'INF'.
+    """
+    if isinstance(value, str):
+        if value == 'INF':
+            return float('inf') # AT could be infinity if TO is 0
+        try:
+            if '.' in value:
+                return float(value)
+            else:
+                return int(value)
+        except ValueError:
+            # if there is not FGA or FTA, the value is '-'
+            return 0  
+    elif value is None:
+        return 0
+    else:
+        return value  # if it's already a number
+    
 
 def get_league_matchup(league_teams, week, game_stat_categories):
     '''
@@ -255,13 +279,7 @@ def get_league_matchup(league_teams, week, game_stat_categories):
         # make sure stat_id in game stat categories to filter out display only stat
         if stat_id in game_stat_categories:
             stat_name = game_stat_categories[stat_id]['display_name']
-            v = e['value']
-            if isinstance(v, str) and '.' in v:
-                v = float(v)
-            elif isinstance(v, str) and '.' not in v:
-                v = int(v)
-            elif v is None:  # some stats are not available, like 'A/T' if T is 0
-                v = 0
+            v = convert_to_number(e['value'])
             team_stats[stat_name] = v
 
         # the stats of this team is complete
