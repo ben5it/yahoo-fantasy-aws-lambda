@@ -171,3 +171,32 @@ def load_html_from_s3_as_str(file_key):
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         return None
+
+
+def remove_all_files_in_folder_in_s3(folder_key):
+    """
+    Remove all files under a folder in an S3 bucket.
+    
+    Parameters:
+    - folder_key: The name of the folder (prefix) in the S3 bucket.
+    """
+
+    bucket_name = os.environ.get("DATA_BUCKET_NAME")
+
+    folder_key = 'data/' + folder_key
+
+    s3 = boto3.client('s3')
+
+    # List all objects in the specified folder
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=folder_key)
+
+    if 'Contents' in response:
+        # Extract the keys of the objects to delete
+        objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+
+        # Delete the objects
+        s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+
+        logger.debug(f"Deleted {len(objects_to_delete)} objects from {folder_key} in bucket {bucket_name}.")
+    else:
+        logger.debug(f"No objects found in {folder_key} in bucket {bucket_name}.")

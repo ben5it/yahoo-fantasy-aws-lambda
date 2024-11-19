@@ -42,11 +42,14 @@ def lambda_handler(event, context):
     task_id = utils.get_task_id(league_id, week)
     update_task_status(task_id, { "state": 'IN_PROGRESS', "percentage": 1 })
 
+    # remove all previous analysis result
     season = utils.get_season()
+    folder_key = f"{season}/{league_id}/{week}/"
+    s3op.remove_all_files_in_folder_in_s3(folder_key)
+
+    # get stats of all teams for the total season
     league_info = utils.get_league_info(league_id)
     league_key = league_info['league_key']
-   
-    # get stats of all teams for the total season
     teams = fapi.get_league_teams(league_key, league_id)
     team_keys = list(map(lambda x: x['team_key'], teams))
     game_stat_categories = fapi.get_game_stat_categories()
@@ -114,12 +117,12 @@ def lambda_handler(event, context):
     start_progress = 40
     end_progress = 80
     step = (end_progress - start_progress) / len(teams)
-    stat_names = week_stats_df.columns.values.tolist()[:-1] # get the stat names, need to remove the last column 'total'
-    team_names = week_stats_df.index.tolist()
+    stat_names = week_score_df.columns.values.tolist()[:-1] # get the stat names, need to remove the last column 'total'
+    team_names = week_score_df.index.tolist()
     for idx, team_name in enumerate(team_names):
         # get the stat scores, need to remove the last column 'total'
-        week_score = week_stats_df.loc[team_name].values.tolist()[:-1]
-        total_score = total_stats_df.loc[team_name].values.tolist()[:-1]
+        week_score = week_score_df.loc[team_name].values.tolist()[:-1]
+        total_score = total_score_df.loc[team_name].values.tolist()[:-1]
         img_data = chart.get_radar_chart(stat_names, [total_score, week_score], len(team_names), ['Total', 'Week {}'.format(week)], team_name)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
