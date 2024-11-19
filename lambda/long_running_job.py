@@ -142,7 +142,7 @@ def lambda_handler(event, context):
     matchups = week_info['matchups']
     start_progress = 80
     end_progress = 100
-    step = 2 * (end_progress - start_progress) / len(matchups)
+    step = (end_progress - start_progress) / len(matchups)
 
     # generate radar chart for each matchup next week
     for idx in range(0, len(matchups), 2 ): 
@@ -154,7 +154,7 @@ def lambda_handler(event, context):
         img_data = chart.get_radar_chart(stat_names, [team_score_1, team_score_2], len(team_names), labels, chart_title)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-        percentage = int(start_progress + step * (idx + 1))
+        percentage = int(start_progress + step * (idx + 2))
         update_task_status(task_id, {  "percentage": percentage })
 
     update_task_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
