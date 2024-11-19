@@ -85,8 +85,15 @@ def compute_battle_score(scores_team1, scores_team2):
     return a, b
 
 
+def get_matchup_opponent(matchup_array, team_name):
+    '''Given the matchup array and the team name, return the opponent of this team
+    '''
+    index = matchup_array.index(team_name)
+    opposite_index = index + 1 if index % 2 == 0 else index - 1
+    return matchup_array[opposite_index]
 
-def roto_score_to_battle_score(score_df, matchup_dict):
+
+def roto_score_to_battle_score(score_df, matchup_array):
     '''Give the roto score of a league for a week, calculate the matchup score against every other player
     '''
 
@@ -109,7 +116,8 @@ def roto_score_to_battle_score(score_df, matchup_dict):
     matchup_points = []
     team_names=battle_df.index.tolist()
     for team_name in team_names:
-        matchup_points.append(battle_df.at[team_name, matchup_dict[team_name]])
+        opposite_team_name = get_matchup_opponent(matchup_array, team_name)
+        matchup_points.append(battle_df.at[team_name, opposite_team_name])
 
     # the current point a team gets
     battle_df['本周得分'] = matchup_points

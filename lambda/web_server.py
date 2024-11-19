@@ -115,13 +115,18 @@ def lambda_handler(event, context):
         table = dynamodb.Table(os.environ.get("DB_TASK_TABLE")) 
         resp  = table.get_item(Key={"taskId": taskId})
         if 'Item' in resp:
-            state = resp['Item']['state']
-            percentage = int(resp['Item']['percentage'])
-            last_updated = int(resp['Item']['last_updated'])
+            item = resp['Item']
+            state = item['state']
+            percentage = int(item['percentage'])
+            last_updated = int(item['last_updated'])
             now = int(time.time())
             if state == 'COMPLETED':
-                 # still less than 15 minutes after last update, consider it as up to date
-                if now - last_updated < 900: 
+                week_status = item.get('week_status')
+
+                # if it is postevent, then that means the data is already updated after the week ends
+                # otherwise, check the last updated time, if it is still less than 30 minutes after last update,
+                # consider it as up to date because we don't want to run the analysis too frequently
+                if week_status == 'postevent' or now - last_updated < 1800: 
                     return get_result(league_id, week)
 
                 else: # consider it as out of date, need to run analysis again

@@ -69,25 +69,6 @@ def league_bar_chart(df, title, sort=False):
 
     return img_data
 
-def league_radar_charts(week_df, total_df, week):
-    charts = []
-
-    # get the stat names, need to remove the last column 'total'
-    stat_names = week_df.columns.values.tolist()[:-1]
-    # app.logger.debug(stat_names)
-    team_names = week_df.index.tolist()
-    # app.logger.debug(team_names)
-
-    labels = ['Total', 'Week {}'.format(week)]
-
-    for team_name in team_names:
-        # get the stat scores, need to remove the last column 'total'
-        week_score = week_df.loc[team_name].values.tolist()[:-1]
-        total_score = total_df.loc[team_name].values.tolist()[:-1]
-        chart = get_radar_chart(stat_names, [total_score, week_score], len(team_names), labels, team_name)
-        charts.append(chart)
-
-    return charts
 
 
 def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
@@ -153,22 +134,3 @@ def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
 
     return img_data
 
-
-def next_matchup_radar_charts(df, matchups, week):
-    charts = []
-
-    # get the stat names, need to remove the last column 'total'
-    stat_names = df.columns.values.tolist()[:-1]
-    team_names = df.index.tolist()
-    chart_title = '第{}周对战参考'.format(week)
-
-    for i in range(0, len(matchups), 2 ): 
-        team_name_1 = matchups[i]
-        team_name_2 = matchups[i+1]
-        labels = [team_name_1,  team_name_2]
-        team_score_1 = df.loc[team_name_1].values.tolist()[:-1]
-        team_score_2 = df.loc[team_name_2].values.tolist()[:-1]
-        chart = get_radar_chart(stat_names, [team_score_1, team_score_2], len(team_names), labels, chart_title)
-        charts.append(chart)
-
-    return charts

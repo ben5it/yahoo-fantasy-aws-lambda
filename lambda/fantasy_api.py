@@ -174,43 +174,107 @@ def get_league_stats(team_keys, game_stat_categories, week=0):
 def get_league_schedule(league_id):
     pass
 
-def get_league_matchup(team_keys, week):
+def get_league_matchup(league_teams, week, game_stat_categories):
     '''
     Return the matchup for a specified week.
     '''
+    team_keys = list(map(lambda x: x['team_key'], league_teams))
+    team_names = list(map(lambda x: x['name'], league_teams))
+    num_teams = len(league_teams)
+
     teams_str = ','.join(team_keys)
     uri = f"teams;team_keys={teams_str}/matchups;weeks={week}"
     logger.debug(uri) 
 
-    # week_matchup = {}
     resp = make_request(uri)
-    logger.debug(json.dumps(resp))
+    logger.debug(json.dumps(resp, ensure_ascii=False))
     tree = objectpath.Tree(resp)
-    # jfilter = tree.execute('$..teams..team..matchups..matchup.(week, week_start, week_end)')
-    # for e in jfilter:
-    #     logger.debug(e)
-    #     # {'week': '2', 'week_start': '2023-10-30', 'week_end': '2023-11-05'}
-    #     week_matchup = e
-    #     break
 
-    teams = []
+    week_info = {}
+    jfilter = tree.execute('$..teams..team..matchups..matchup.(week, week_start, week_end, status)') 
+    for e in jfilter:
+        week_info.update(e)
+        break
+    # {'week': '4', 'week_start': '2024-11-11', 'week_end': '2024-11-17', 'status': 'postevent'}
+
+    matchups = []
     jfilter = tree.execute('$..teams..team..matchups..matchup..teams..team..name')
     for e in jfilter:
-        # logger.debug(e)
-        if e not in teams:
-            teams.append(e)
+        if e not in matchups:
+            matchups.append(e)
+    # The 1st and 2nd teams are opposite in the matchup,
+    # The 3rd and 4th teams are opposite in the matchup,
+    # and so on.
+    # ['Zephyr', '蹩脚马_Alpha', "Cupid's Arrow", 'karsitty', '天王', '灰灰', 'JamarrChase', '我还想要一只冰墩墩', 'Mars', 'Prince', 'max', '72wins', 'Melo', 'Sin', '首席NBA', 'SLV', "cao's Ingenious Team", 'lydia']
+    week_info['matchups'] = matchups
 
-    # convert to dict
-    matchups = {}
-    logger.debug('Week {} Match up'.format(week))
-    for i in range(0, len(teams), 2 ): 
-        team_name_1 = teams[i]
-        team_name_2 = teams[i+1]
-        matchups[team_name_1] = team_name_2
-        matchups[team_name_2] = team_name_1
-        logger.debug('{} VS {}'.format(team_name_1, team_name_2)) 
+    # get the matchup score for each team
+    jfilter = tree.execute('$..teams..team..matchups..matchup.stat_winners..stat_winner') 
+    jfilter_list = list(jfilter)
+    num_elements = len(jfilter_list) 
+    element_per_team = num_elements / num_teams
+    leagues_scores = []
+    team_scores = {}    # store the score of each category for a team
+    for index, e in enumerate(jfilter_list):
+        team_index = int(index / element_per_team)
+        stat_id = e['stat_id'] 
+        
+        # make sure stat_id in game stat categories to filter out display only stat
+        if stat_id in game_stat_categories:
+            stat_name = game_stat_categories[stat_id]['display_name']
+            if 'winner_team_key' in e:
+                winner_team_key = e['winner_team_key']
+                if winner_team_key == team_keys[team_index]:
+                    team_scores[stat_name] = 1  # win
+                else:
+                    team_scores[stat_name] = 0  # lose
+            else:
+                team_scores[stat_name] = 0.5    # tie
 
-    return teams, matchups
+        # the score of this team is complete
+        if (index + 1) % element_per_team == 0:
+            leagues_scores.append(team_scores)
+            team_scores = {}
+
+
+    score_df = pd.DataFrame(leagues_scores)   
+    score_df['Team'] = team_names
+    score_df.set_index('Team', inplace=True)
+
+
+    # get the raw stats for each team
+    jfilter = tree.execute('$..teams..team..matchups..matchup..teams."0".team..team_stats.stats..stat')
+    jfilter_list = list(jfilter)
+    num_elements = len(jfilter_list) 
+    element_per_team = num_elements / num_teams
+    leagues_stats = []
+    team_stats = {} # store the stats of each category for a team
+    for index, e in enumerate(jfilter_list):
+        stat_id = e['stat_id'] 
+
+        # make sure stat_id in game stat categories to filter out display only stat
+        if stat_id in game_stat_categories:
+            stat_name = game_stat_categories[stat_id]['display_name']
+            v = e['value']
+            if isinstance(v, str) and '.' in v:
+                v = float(v)
+            elif isinstance(v, str) and '.' not in v:
+                v = int(v)
+            elif v is None:  # some stats are not available, like 'A/T' if T is 0
+                v = 0
+            team_stats[stat_name] = v
+
+        # the stats of this team is complete
+        if (index + 1) % element_per_team == 0:
+            leagues_stats.append(team_stats)
+            team_stats = {}
+
+    stats_df = pd.DataFrame(leagues_stats)   
+    team_names = list(map(lambda x: x['name'], league_teams))
+    stats_df['Team'] = team_names
+    stats_df.set_index('Team', inplace=True)
+
+    return week_info, stats_df, score_df
 
 def get_game_stat_categories():
     '''

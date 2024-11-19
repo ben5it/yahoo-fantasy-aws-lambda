@@ -39,56 +39,50 @@ def lambda_handler(event, context):
     
     league_id = int(event['league_id'])
     week = int(event['week'])
-
-    league_info = utils.get_league_info(league_id)
-    league_key = league_info['league_key']
-
     task_id = utils.get_task_id(league_id, week)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 1 })
-   
-    game_stat_categories = fapi.get_game_stat_categories()
-    teams = fapi.get_league_teams(league_key, league_id)
-    team_keys = list(map(lambda x: x['team_key'], teams))
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 5 })
-
-    total_df, sort_orders = fapi.get_league_stats(team_keys, game_stat_categories, 0)
-    week_df, sort_orders  = fapi.get_league_stats(team_keys, game_stat_categories, week)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 10 })
-    
-    week_score = cmpt.stat_to_score(week_df, sort_orders)
-    total_score = cmpt.stat_to_score(total_df, sort_orders)
-    matchup_arr, matchup_dict = fapi.get_league_matchup(team_keys, week)
-    battle_score = cmpt.roto_score_to_battle_score(week_score, matchup_dict)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 20 })
+    update_task_status(task_id, { "state": 'IN_PROGRESS', "percentage": 1 })
 
     season = utils.get_season()
-    # write data frame to cvs on S3
-    # total_stats_csv_file_key = f"{season}/{league_id}/0/stats.csv"
-    # total_score_csv_file_key = f"{season}/{league_id}/0/roto-point.csv"
-    # week_stats_csv_file_key = f"{season}/{league_id}/{week}/stats.csv"
-    # week_score_csv_file_key = f"{season}/{league_id}/{week}/roto-point.csv"
-    # week_battle_csv_file_key = f"{season}/{league_id}/{week}/h2h-score.csv"
-    # s3op.write_dataframe_to_csv_on_s3(total_df, total_stats_csv_file_key)
-    # s3op.write_dataframe_to_csv_on_s3(total_score, total_score_csv_file_key)
-    # s3op.write_dataframe_to_csv_on_s3(week_df, week_stats_csv_file_key)
-    # s3op.write_dataframe_to_csv_on_s3(week_score, week_score_csv_file_key)
-    # s3op.write_dataframe_to_csv_on_s3(battle_score, week_battle_csv_file_key)
+    league_info = utils.get_league_info(league_id)
+    league_key = league_info['league_key']
+   
+    # get stats of all teams for the total season
+    teams = fapi.get_league_teams(league_key, league_id)
+    team_keys = list(map(lambda x: x['team_key'], teams))
+    game_stat_categories = fapi.get_game_stat_categories()
+    total_stats_df, sort_orders = fapi.get_league_stats(team_keys, game_stat_categories, 0)
+    update_task_status(task_id, {  "percentage": 5 })
+
+    # get matchup data of this week, which includes team stats and matchup info
+    week_info, week_stats_df, team_score_df = fapi.get_league_matchup(teams, week, game_stat_categories)
+    week_status = week_info['status']
+    week_info_file_path = f"{season}/{league_id}/{week}/week_info.json"
+    team_score_file_path = f"{season}/{league_id}/{week}/team_score.csv"
+    s3op.write_json_to_s3(week_info, week_info_file_path)
+    s3op.write_dataframe_to_csv_on_s3(team_score_df, team_score_file_path)
+    update_task_status(task_id, {  "percentage": 10, "week_status": week_status })
+    
+    week_score_df = cmpt.stat_to_score(week_stats_df, sort_orders)
+    total_score_df = cmpt.stat_to_score(total_stats_df, sort_orders)
+    battle_score_df = cmpt.roto_score_to_battle_score(week_score_df, week_info['matchups'])
+    update_task_status(task_id, {  "percentage": 15 })
 
     # write data frame to excel on S3
-    tier_point = total_df.shape[1]  / 2
+    tier_point = total_stats_df.shape[1]  / 2
     logger.debug(f"tier_point: {tier_point}")
-    styled_battle_score = apply_style_for_h2h_df(battle_score, tier_point, f'H2H Matchup - Week {week}')
-    styled_week_score = apply_style_for_roto_df(week_score, f'Roto Points - Week {week}')
-    styled_week_stats = apply_style_for_roto_df(week_df, f'Stats - Week {week}')
-    styled_total_score = apply_style_for_roto_df(total_score, 'Roto Points - Total')
-    styled_total_stats = apply_style_for_roto_df(total_df, 'Stats - Total')
+    styled_battle_score = apply_style_for_h2h_df(battle_score_df, tier_point, f'H2H Matchup - Week {week}')
+    styled_week_score = apply_style_for_roto_df(week_score_df, f'Roto Points - Week {week}')
+    styled_week_stats = apply_style_for_roto_df(week_stats_df, f'Stats - Week {week}')
+    styled_total_score = apply_style_for_roto_df(total_score_df, 'Roto Points - Total')
+    styled_total_stats = apply_style_for_roto_df(total_stats_df, 'Stats - Total')
+    update_task_status(task_id, {  "percentage": 20 })
 
     # write to excel
     result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
     styled_dfs = [styled_battle_score, styled_week_score, styled_week_stats, styled_total_score, styled_total_stats]
     sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
     s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 30 })
+    update_task_status(task_id, {  "percentage": 25 })
 
     # write to html
     roto_point_week_html_file_path = f"{season}/{league_id}/{week}/roto_point_wk{week:02d}.html"
@@ -101,43 +95,72 @@ def lambda_handler(event, context):
     s3op.write_styled_dataframe_to_html_on_s3(styled_total_score, roto_point_total_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_total_stats, roto_stats_total_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_battle_score, h2h_matchup_week_html_file_path, False)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 35 })
+    update_task_status(task_id, {  "percentage": 30 })
 
-    forecast_week = utils.get_forecast_week(league_id)
-    next_matchup_arr, next_matchup_dict = fapi.get_league_matchup(team_keys, forecast_week)
-    matchup_file_path = f"{season}/{league_id}/{forecast_week}/matchup.json"
-    s3op.write_json_to_s3(next_matchup_arr, matchup_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 45 })
-
+    # bar chart for week roto score
     league_name = utils.get_league_info(league_id)['name']
-    week_bar_chart = chart.league_bar_chart(week_score, '{} 战力榜 - Week {}'.format(league_name, week))
+    week_bar_chart = chart.league_bar_chart(week_score_df, '{} 战力榜 - Week {}'.format(league_name, week))
     roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_wk{week:02d}.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 50 })
+    update_task_status(task_id, {  "percentage": 35 })
 
-    total_bar_chart = chart.league_bar_chart(total_score, '{} 战力榜 - Total'.format(league_name))
+    # bar chart for total roto score
+    total_bar_chart = chart.league_bar_chart(total_score_df, '{} 战力榜 - Total'.format(league_name))
     roto_total_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_total.png"
     s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 55 })
+    update_task_status(task_id, {  "percentage": 40 })
 
     # radar chart for each team
-    radar_charts = chart.league_radar_charts(week_score, total_score, week)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 70 })
-    for idx, img_data in enumerate(radar_charts):
+    start_progress = 40
+    end_progress = 80
+    step = (end_progress - start_progress) / len(teams)
+    stat_names = week_stats_df.columns.values.tolist()[:-1] # get the stat names, need to remove the last column 'total'
+    team_names = week_stats_df.index.tolist()
+    for idx, team_name in enumerate(team_names):
+        # get the stat scores, need to remove the last column 'total'
+        week_score = week_stats_df.loc[team_name].values.tolist()[:-1]
+        total_score = total_stats_df.loc[team_name].values.tolist()[:-1]
+        img_data = chart.get_radar_chart(stat_names, [total_score, week_score], len(team_names), ['Total', 'Week {}'.format(week)], team_name)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 80 })
+        percentage = int(start_progress + step * (idx + 1))
+        update_task_status(task_id, {  "percentage": percentage })
+
 
     # matchup forecast for next week
-    next_matchup_charts = chart.next_matchup_radar_charts(total_score, next_matchup_arr, forecast_week)
-    update_status(task_id, { "state": 'IN_PROGRESS', "percentage": 90 })
-    for idx, img_data in enumerate(next_matchup_charts):
+    forecast_week = utils.get_forecast_week(league_id)
+    if forecast_week > week:
+        week_info, week_stats_df, team_score_df = fapi.get_league_matchup(teams, forecast_week, game_stat_categories)
+        week_info_file_path = f"{season}/{league_id}/{forecast_week}/week_info.json"
+        s3op.write_json_to_s3(week_info, week_info_file_path)
+
+
+    # get the stat names, need to remove the last column 'total'
+    stat_names = total_score_df.columns.values.tolist()[:-1]
+    team_names = total_score_df.index.tolist()
+    chart_title = '第{}周对战参考'.format(forecast_week)
+    matchups = week_info['matchups']
+    start_progress = 80
+    end_progress = 100
+    step = 2 * (end_progress - start_progress) / len(matchups)
+
+    # generate radar chart for each matchup next week
+    for idx in range(0, len(matchups), 2 ): 
+        team_name_1 = matchups[idx]
+        team_name_2 = matchups[idx+1]
+        labels = [team_name_1,  team_name_2]
+        team_score_1 = total_score_df.loc[team_name_1].values.tolist()[:-1]
+        team_score_2 = total_score_df.loc[team_name_2].values.tolist()[:-1]
+        img_data = chart.get_radar_chart(stat_names, [team_score_1, team_score_2], len(team_names), labels, chart_title)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
-    update_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
+        percentage = int(start_progress + step * (idx + 1))
+        update_task_status(task_id, {  "percentage": percentage })
+
+    update_task_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
 
-def update_status(taskId, status):
+def update_task_status(taskId, status):
     # Get the current timestamp
     now = int(datetime.now().timestamp())
     # Get the timestamp for a year later
@@ -148,20 +171,36 @@ def update_status(taskId, status):
     table = dynamodb.Table(os.environ.get("DB_TASK_TABLE")) 
     #inserting values into table 
 
-    response = table.update_item(
-        Key={'taskId': taskId},
-        UpdateExpression='SET #state=:val1, percentage=:val2, last_updated=:val3, expireAt=:val4',
-        ExpressionAttributeNames={
-            '#state': 'state'
-        },
-        ExpressionAttributeValues =json.loads(json.dumps({
-            ':val1':  status['state'],
-            ':val2':  status.get('percentage', 0),
-            ':val3':  now,
-            ':val4':  ttl
-        })),
-        ReturnValues="UPDATED_NEW"
-    )
+    expression_str = 'SET last_updated=:val1, expireAt=:val2'
+    attribute_names = {}
+    attribute_values = {
+        ':val1':  now,
+        ':val2':  ttl
+    }
+
+    if 'state' in status:
+        expression_str += ', #state=:val3'
+        attribute_values[':val3'] = status['state']
+        attribute_names['#state'] = 'state'
+    if 'percentage' in status:
+        expression_str += ', percentage=:val4'
+        attribute_values[':val4'] = status['percentage']
+    if 'week_status' in status:
+        expression_str += ', week_status=:val5'
+        attribute_values[':val5'] = status['week_status']
+
+    params = {
+        'Key': {'taskId': taskId},
+        'UpdateExpression': expression_str,
+        'ExpressionAttributeValues' : json.loads(json.dumps(attribute_values)),
+        'ReturnValues': "UPDATED_NEW"      
+    }
+
+    # Add ExpressionAttributeNames only if attribute_names is not empty
+    if attribute_names:
+        params['ExpressionAttributeNames'] = attribute_names
+
+    response = table.update_item(**params)
     logger.debug(response["Attributes"])
 
 
