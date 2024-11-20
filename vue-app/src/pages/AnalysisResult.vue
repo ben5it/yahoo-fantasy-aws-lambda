@@ -149,7 +149,18 @@ export default {
     };
 
     if (currentLeague) {
-        fetchData();
+      // run analysis for all previous weeks stealthily in the background
+      // because user may want to see the previous weeks analysis
+      // so that they can get those result faster,
+      // but we don't need to wait for those results.
+      const startWeek = parseInt(currentLeague.start_week);
+      const endWeek = currentLeague.current_week;
+      for (let week = endWeek - 1; week >= startWeek; week--) {
+        let url = `/api/getdata?league_id=${currentLeague.league_id}&week=${week}`;
+        fetch(url);
+      }
+
+      fetchData();
     }
 
     const weeks = computed(() => {
@@ -170,6 +181,7 @@ export default {
 
     onMounted(() => {
       if (currentLeague) {
+        // set interval to featch this week's data every 5 seconds
         intervalId.value = setInterval(fetchData, 5000);
       }
     });
