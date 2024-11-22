@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <h2 class="text-center my-4">Leagues</h2>
-    <div v-if="leagues.length" class="row">
+    <div v-if="leagues?.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">
         <div class="league-card">
           <a :href="league.url" target="_blank">
