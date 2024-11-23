@@ -67,7 +67,8 @@ def load_dataframe_from_csv_on_s3(file_key):
     try:
         obj = s3.Object(bucket_name, file_key)
         csv_string = obj.get()['Body'].read().decode('utf-8')
-        df = pd.read_csv(StringIO(csv_string))
+        # Read the CSV file and set the first column as the index
+        df = pd.read_csv(StringIO(csv_string), index_col=0)
         return df
 
     except Exception as e:

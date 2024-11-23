@@ -155,7 +155,7 @@ export default {
       // but we don't need to wait for those results.
       const startWeek = parseInt(currentLeague.start_week);
       const endWeek = currentLeague.current_week;
-      for (let week = endWeek - 1; week >= startWeek; week--) {
+      for (let week = startWeek; week < endWeek; week++) {
         let url = `/api/getdata?league_id=${currentLeague.league_id}&week=${week}`;
         fetch(url);
       }

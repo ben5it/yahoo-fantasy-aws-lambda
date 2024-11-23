@@ -52,17 +52,18 @@ def lambda_handler(event, context):
     league_key = league_info['league_key']
     teams = fapi.get_league_teams(league_key, league_id)
     team_keys = list(map(lambda x: x['team_key'], teams))
+    team_ids = list(map(lambda x: int(x['team_id']), teams))
     game_stat_categories = fapi.get_game_stat_categories()
     total_stats_df, sort_orders = fapi.get_league_stats(team_keys, game_stat_categories, 0)
     update_task_status(task_id, {  "percentage": 5 })
 
     # get matchup data of this week, which includes team stats and matchup info
-    week_info, week_stats_df, team_score_df = fapi.get_league_matchup(teams, week, game_stat_categories)
+    week_info, week_stats_df, week_score_df = fapi.get_league_matchup(teams, week, game_stat_categories)
     week_status = week_info['status']
     week_info_file_path = f"{season}/{league_id}/{week}/week_info.json"
-    team_score_file_path = f"{season}/{league_id}/{week}/team_score.csv"
     s3op.write_json_to_s3(week_info, week_info_file_path)
-    s3op.write_dataframe_to_csv_on_s3(team_score_df, team_score_file_path)
+    week_score_file_path = f"{season}/{league_id}/{week}/week_score.csv"
+    s3op.write_dataframe_to_csv_on_s3(week_score_df, week_score_file_path)
     update_task_status(task_id, {  "percentage": 10, "week_status": week_status })
     
     week_score_df = cmpt.stat_to_score(week_stats_df, sort_orders)
@@ -159,6 +160,47 @@ def lambda_handler(event, context):
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
         percentage = int(start_progress + step * (idx + 2))
         update_task_status(task_id, {  "percentage": percentage })
+
+
+    # calculate the cumulative score
+    start_week = int(league_info['start_week'])
+    end_week = league_info['current_week']
+    # only calculate when there are at least two post event weeks
+    if end_week > start_week + 1:
+        has_missing_data = False
+        selected_columns = ['Win', 'Point' ]
+        # Create a new DataFrame with the same index and columns as week_score_df, but with all values set to zero
+        cumulative_score_df = pd.DataFrame(0, index=week_score_df.index, columns=selected_columns)
+        # Add new columns 'Previous_Point' and 'Previous_Win' with value 0
+        cumulative_score_df['Previous_Point'] = team_ids
+        cumulative_score_df['Previous_Win'] = 0
+
+        cumulative_rank_df = pd.DataFrame(index=week_score_df.index)
+
+        for i in range(start_week, end_week):   
+            this_week_score_file_path = f"{season}/{league_id}/{i}/week_score.csv"
+            this_week_score_df = s3op.load_dataframe_from_csv_on_s3(this_week_score_file_path)
+            # logger.info(this_week_score_df)
+            if this_week_score_df is None:
+                has_missing_data = True
+                logger.debug(f"Cannot calculate cumulative score because week score data for league {league_id} week {i} is missing")
+                break  # no need to continue if one week data is missing
+
+            week_selected = this_week_score_df[selected_columns]
+            # Add the selected columns element-wise
+            cumulative_score_df = cumulative_score_df.add(week_selected, fill_value=0)
+            # logger.info(cumulative_score_df)
+            cumulative_rank_df[f'week {i}'] = cumulative_score_df[['Point', 'Win', 'Previous_Point', 'Previous_Win']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
+            # logger.info(cumulative_rank_df)
+
+            # Update the 'Previous_Point' and 'Previous_Win' columns for next iteration to compute the rank
+            cumulative_score_df['Previous_Point'] = cumulative_score_df['Point']
+            cumulative_score_df['Previous_Win'] = cumulative_score_df['Win']
+
+        if not has_missing_data:
+            # write to csv
+            cumulative_rank_file_path = f"{season}/{league_id}/{week}/cumulative_rank.csv"
+            s3op.write_dataframe_to_csv_on_s3(cumulative_rank_df, cumulative_rank_file_path)
 
     update_task_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
