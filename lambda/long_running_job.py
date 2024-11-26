@@ -66,24 +66,24 @@ def lambda_handler(event, context):
     s3op.write_dataframe_to_csv_on_s3(week_score_df, week_score_file_path)
     update_task_status(task_id, {  "percentage": 10, "week_status": week_status })
     
-    week_score_df = cmpt.stat_to_score(week_stats_df, sort_orders)
-    total_score_df = cmpt.stat_to_score(total_stats_df, sort_orders)
-    battle_score_df = cmpt.roto_score_to_battle_score(week_score_df, week_info['matchups'])
+    week_point_df = cmpt.stat_to_score(week_stats_df, sort_orders)
+    total_point_df = cmpt.stat_to_score(total_stats_df, sort_orders)
+    battle_score_df = cmpt.roto_score_to_battle_score(week_point_df, week_info['matchups'])
     update_task_status(task_id, {  "percentage": 15 })
 
     # write data frame to excel on S3
     tier_point = total_stats_df.shape[1]  / 2
     logger.debug(f"tier_point: {tier_point}")
     styled_battle_score = apply_style_for_h2h_df(battle_score_df, tier_point, f'H2H Matchup - Week {week}')
-    styled_week_score = apply_style_for_roto_df(week_score_df, f'Roto Points - Week {week}')
+    styled_week_point = apply_style_for_roto_df(week_point_df, f'Roto Points - Week {week}')
     styled_week_stats = apply_style_for_roto_df(week_stats_df, f'Stats - Week {week}')
-    styled_total_score = apply_style_for_roto_df(total_score_df, 'Roto Points - Total')
+    styled_total_point = apply_style_for_roto_df(total_point_df, 'Roto Points - Total')
     styled_total_stats = apply_style_for_roto_df(total_stats_df, 'Stats - Total')
     update_task_status(task_id, {  "percentage": 20 })
 
     # write to excel
     result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
-    styled_dfs = [styled_battle_score, styled_week_score, styled_week_stats, styled_total_score, styled_total_stats]
+    styled_dfs = [styled_battle_score, styled_week_point, styled_week_stats, styled_total_point, styled_total_stats]
     sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
     s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
     update_task_status(task_id, {  "percentage": 25 })
@@ -94,22 +94,22 @@ def lambda_handler(event, context):
     roto_point_total_html_file_path = f"{season}/{league_id}/{week}/roto_point_total.html"
     roto_stats_total_html_file_path = f"{season}/{league_id}/{week}/roto_stats_total.html"
     h2h_matchup_week_html_file_path = f"{season}/{league_id}/{week}/h2h_matchup_wk{week:02d}.html"
-    s3op.write_styled_dataframe_to_html_on_s3(styled_week_score, roto_point_week_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_week_point, roto_point_week_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_week_stats, roto_stats_week_html_file_path)
-    s3op.write_styled_dataframe_to_html_on_s3(styled_total_score, roto_point_total_html_file_path)
+    s3op.write_styled_dataframe_to_html_on_s3(styled_total_point, roto_point_total_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_total_stats, roto_stats_total_html_file_path)
     s3op.write_styled_dataframe_to_html_on_s3(styled_battle_score, h2h_matchup_week_html_file_path, False)
     update_task_status(task_id, {  "percentage": 30 })
 
     # bar chart for week roto score
     league_name = utils.get_league_info(league_id)['name']
-    week_bar_chart = chart.league_bar_chart(week_score_df, '{} 战力榜 - Week {}'.format(league_name, week))
+    week_bar_chart = chart.league_bar_chart(week_point_df, '{} 战力榜 - Week {}'.format(league_name, week))
     roto_week_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_wk{week:02d}.png"
     s3op.write_image_to_s3(week_bar_chart, roto_week_bar_file_path)
     update_task_status(task_id, {  "percentage": 35 })
 
     # bar chart for total roto score
-    total_bar_chart = chart.league_bar_chart(total_score_df, '{} 战力榜 - Total'.format(league_name))
+    total_bar_chart = chart.league_bar_chart(total_point_df, '{} 战力榜 - Total'.format(league_name))
     roto_total_bar_file_path = f"{season}/{league_id}/{week}/roto_bar_total.png"
     s3op.write_image_to_s3(total_bar_chart, roto_total_bar_file_path)
     update_task_status(task_id, {  "percentage": 40 })
@@ -118,12 +118,12 @@ def lambda_handler(event, context):
     start_progress = 40
     end_progress = 80
     step = (end_progress - start_progress) / len(teams)
-    stat_names = week_score_df.columns.values.tolist()[:-1] # get the stat names, need to remove the last column 'total'
-    team_names = week_score_df.index.tolist()
+    stat_names = week_point_df.columns.values.tolist()[:-1] # get the stat names, need to remove the last column 'total'
+    team_names = week_point_df.index.tolist()
     for idx, team_name in enumerate(team_names):
         # get the stat scores, need to remove the last column 'total'
-        week_score = week_score_df.loc[team_name].values.tolist()[:-1]
-        total_score = total_score_df.loc[team_name].values.tolist()[:-1]
+        week_score = week_point_df.loc[team_name].values.tolist()[:-1]
+        total_score = total_point_df.loc[team_name].values.tolist()[:-1]
         img_data = chart.get_radar_chart(stat_names, [total_score, week_score], len(team_names), ['Total', 'Week {}'.format(week)], team_name)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_team_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
@@ -140,8 +140,8 @@ def lambda_handler(event, context):
 
 
     # get the stat names, need to remove the last column 'total'
-    stat_names = total_score_df.columns.values.tolist()[:-1]
-    team_names = total_score_df.index.tolist()
+    stat_names = total_point_df.columns.values.tolist()[:-1]
+    team_names = total_point_df.index.tolist()
     chart_title = '第{}周对战参考'.format(forecast_week)
     matchups = week_info['matchups']
     start_progress = 80
@@ -153,8 +153,8 @@ def lambda_handler(event, context):
         team_name_1 = matchups[idx]
         team_name_2 = matchups[idx+1]
         labels = [team_name_1,  team_name_2]
-        team_score_1 = total_score_df.loc[team_name_1].values.tolist()[:-1]
-        team_score_2 = total_score_df.loc[team_name_2].values.tolist()[:-1]
+        team_score_1 = total_point_df.loc[team_name_1].values.tolist()[:-1]
+        team_score_2 = total_point_df.loc[team_name_2].values.tolist()[:-1]
         img_data = chart.get_radar_chart(stat_names, [team_score_1, team_score_2], len(team_names), labels, chart_title)
         radar_chart_file_path = f"{season}/{league_id}/{week}/radar_forecast_{idx+1:02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
@@ -165,22 +165,19 @@ def lambda_handler(event, context):
     # calculate the cumulative score
     start_week = int(league_info['start_week'])
     end_week = league_info['current_week']
-    # only calculate when there are at least two post event weeks
-    if end_week > start_week + 1:
+    # only calculate when there are at least two post event weeks and the week to be analyzed is the current week
+    if end_week > start_week + 1 and week + 1 >= end_week :
         has_missing_data = False
-        selected_columns = ['Win', 'Point' ]
+        # Select all columns except the last one 'Rank' because it is not needed for cumulative score calculation
+        selected_columns = week_score_df.columns[:-1]
         # Create a new DataFrame with the same index and columns as week_score_df, but with all values set to zero
         cumulative_score_df = pd.DataFrame(0, index=week_score_df.index, columns=selected_columns)
-        # Add new columns 'Previous_Point' and 'Previous_Win' with value 0
-        cumulative_score_df['Previous_Point'] = team_ids
-        cumulative_score_df['Previous_Win'] = 0
 
         cumulative_rank_df = pd.DataFrame(index=week_score_df.index)
 
         for i in range(start_week, end_week):   
             this_week_score_file_path = f"{season}/{league_id}/{i}/week_score.csv"
             this_week_score_df = s3op.load_dataframe_from_csv_on_s3(this_week_score_file_path)
-            # logger.info(this_week_score_df)
             if this_week_score_df is None:
                 has_missing_data = True
                 logger.debug(f"Cannot calculate cumulative score because week score data for league {league_id} week {i} is missing")
@@ -189,18 +186,49 @@ def lambda_handler(event, context):
             week_selected = this_week_score_df[selected_columns]
             # Add the selected columns element-wise
             cumulative_score_df = cumulative_score_df.add(week_selected, fill_value=0)
-            # logger.info(cumulative_score_df)
-            cumulative_rank_df[f'week {i}'] = cumulative_score_df[['Point', 'Win', 'Previous_Point', 'Previous_Win']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
-            # logger.info(cumulative_rank_df)
+            cumulative_score_df[f'Point_week_{i}'] = week_selected['Point']
+            cumulative_score_df[f'Win_week_{i}'] = week_selected['Win']
 
-            # Update the 'Previous_Point' and 'Previous_Win' columns for next iteration to compute the rank
-            cumulative_score_df['Previous_Point'] = cumulative_score_df['Point']
-            cumulative_score_df['Previous_Win'] = cumulative_score_df['Win']
+            # calculate the rank based on the total point, for tie break, use the previous week's point
+            # If there's still a tie, the process continues for each previous week until the tie is broken.
+            sort_by_columns = ['Point']  # This is the total point column
+            # Loop from i to start_week by decreasing i
+            for j in range(i, start_week - 1, -1):
+                sort_by_columns.append(f'Point_week_{j}')
+            sort_by_columns.append(f'Win_week_{start_week}')
+
+            cumulative_rank_df[f'week {i}'] = cumulative_score_df[sort_by_columns].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
+            # Add ranking column
+            cumulative_score_df['Rank'] = cumulative_score_df[sort_by_columns].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
         if not has_missing_data:
+            # Convert 'Win', 'Lose', and 'Tie' columns to strings and create 'W-L-T' column
+            cumulative_score_df['W-L-T'] = cumulative_score_df['Win'].astype(str) + '-' + cumulative_score_df['Lose'].astype(str) + '-' + cumulative_score_df['Tie'].astype(str)
+  
+            # Drop some intermidiate columns
+            column_names = stat_names + ['W-L-T', 'Rank']
+            cumulative_score_df = cumulative_score_df[column_names]
+            cumulative_score_df = cumulative_score_df.sort_values(by=['Rank'], ascending=True)
+            cumulative_score_csv_file_path = f"{season}/{league_id}/season/cumulative_score.csv"
+            s3op.write_dataframe_to_csv_on_s3(cumulative_score_df, cumulative_score_csv_file_path)
+            
+            styled_cumulative_score_df = cumulative_score_df.style\
+                .apply(highlight_max_min, subset=cumulative_score_df.columns[0:-2], axis=0)\
+                .format(remove_trailing_zeros)\
+                .set_caption('Score by category')
+
+            cumulative_score_html_file_path = f"{season}/{league_id}/season/cumulative_score.html"
+            s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_score_df, cumulative_score_html_file_path)
+
             # write to csv
-            cumulative_rank_file_path = f"{season}/{league_id}/{week}/cumulative_rank.csv"
-            s3op.write_dataframe_to_csv_on_s3(cumulative_rank_df, cumulative_rank_file_path)
+            cumulative_rank_csv_file_path = f"{season}/{league_id}/season/cumulative_rank.csv"
+            s3op.write_dataframe_to_csv_on_s3(cumulative_rank_df, cumulative_rank_csv_file_path)
+            styled_cumulative_rank_df = cumulative_rank_df.style\
+                .format(remove_trailing_zeros)\
+                .set_caption('Rank by week')
+            cumulative_rank_html_file_path = f"{season}/{league_id}/season/cumulative_rank.html"
+            s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_rank_df, cumulative_rank_html_file_path)
+
 
     update_task_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 
@@ -305,9 +333,9 @@ def highlight_based_on_value(s, value):
             styles.append('background-color: #FFC7CE; color: #9C0006')
     return styles
 
-def highlight_last_three_columns(s):
+def highlight_last_n_columns(s, n):
     """
-    Highlight the last three columns in a Series with a blue background.
+    Highlight the last n columns in a Series with a blue background.
     
     Parameters
     ----------
@@ -317,9 +345,9 @@ def highlight_last_three_columns(s):
     Returns
     -------
     pandas.Series
-        The styled Series with the last three columns highlighted.
+        The styled Series with the last n columns highlighted.
     """
-    return ['background-color: black; color: lawngreen; border-color: black' if i >= len(s) - 3 else '' for i in range(len(s))]
+    return ['background-color: black; color: lawngreen; border-color: black' if i >= len(s) - n else '' for i in range(len(s))]
 
 
 def remove_trailing_zeros(x):
@@ -355,7 +383,7 @@ def apply_style_for_roto_df(df, caption):
 def apply_style_for_h2h_df(df, tier_point, caption):
 
     styled_df = df.style.apply(highlight_based_on_value, value=tier_point, subset=df.columns[0:-3])\
-        .apply(highlight_last_three_columns, subset=df.columns[-3:], axis=1)\
+        .apply(highlight_last_n_columns, n=3, subset=df.columns[-3:], axis=1)\
         .format(remove_trailing_zeros)\
         .set_caption(caption)
 
