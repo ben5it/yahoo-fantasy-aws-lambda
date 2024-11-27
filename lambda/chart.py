@@ -180,3 +180,31 @@ def generate_rank_chart(df, league_name):
     plt.close()
 
     return img_data
+
+def generate_category_pie_chart_for_team(df, team):
+    """
+    Generate a pie chart for a specific team.
+    
+    Parameters:
+    - df: The DataFrame with teams as the index and categories as the columns.
+    - team: The index label of the team for which to generate the pie chart.
+    """
+    # Get the data for the specified team
+    team_data = df.loc[team]
+    
+   # Get a colormap
+    colormap = cm.get_cmap('tab20', len(team_data))
+
+    # Create a pie chart
+    plt.figure(figsize=(8, 8))
+    plt.pie(team_data, labels=team_data.index, autopct='%1.1f%%', startangle=140, colors=[colormap(i) for i in range(len(team_data))])
+
+    plt.title(f'Wins by Category for {team}', fontproperties=cnFontProp)
+
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png')
+    img_data.seek(0)  # rewind to beginning of file
+
+    plt.close()
+
+    return img_data

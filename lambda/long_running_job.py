@@ -285,6 +285,15 @@ def lambda_handler(event, context):
             cumulative_score_html_file_path = season_folder_key + "cumulative_score.html"
             s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_score_by_category_df, cumulative_score_html_file_path)
 
+            # generate pie chart for each team
+            cumulative_score_by_category_df = cumulative_score_by_category_df.drop(columns=['W-L-T', 'Rank'])
+            # Make sure the index (team name) of this_week_matchup_df is the same with this_week_score_df
+            cumulative_score_by_category_df = cumulative_score_by_category_df.reindex(this_week_score_df.index)
+            for idx, team_name in enumerate( cumulative_score_by_category_df.index):
+                img_data = chart.generate_category_pie_chart_for_team(cumulative_score_by_category_df, team_name)
+                pie_chart_file_path = season_folder_key + f"pie_chart_{idx+1:02d}.png"
+                s3op.write_image_to_s3(img_data, pie_chart_file_path)
+
             # write to image
             rank_by_week_img_file_path = season_folder_key + "team_rank_by_weeks.png"
             img_data = chart.generate_rank_chart(cumulative_rank_df, league_name)
