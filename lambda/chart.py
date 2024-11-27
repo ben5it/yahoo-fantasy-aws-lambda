@@ -36,7 +36,7 @@ def league_bar_chart(df, title, sort=False):
     width = 0.5
 
     # Plotting the bars
-    fig, ax = plt.subplots(figsize=(12, 9), dpi=150)
+    fig, ax = plt.subplots(figsize=(12, 9), dpi=100)
 
     # Create a bar with total scores
     bar_container = ax.bar(pos, scores, width, alpha=0.7, color='#87CEEB', edgecolor='#011f4b')
@@ -98,7 +98,7 @@ def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
     angles += angles[:1]
 
     # Create the radar chart
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True), dpi=150)
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True), dpi=100)
 
     # Draw one axe per variable and add labels
     ax.set_theta_offset(np.pi / 2)
@@ -146,7 +146,7 @@ def generate_rank_chart(df, league_name):
     fig_width = min(max(12, num_columns), 20)
 
     # Create the plot
-    plt.figure(figsize=(fig_width, 8))
+    plt.figure(figsize=(fig_width, 8), dpi=100)
 
     # Get a colormap
     colormap = cm.get_cmap('tab20', len(df.index))
@@ -196,11 +196,13 @@ def generate_category_pie_chart_for_team(df, team):
     colormap = cm.get_cmap('tab20', len(team_data))
 
     # Create a pie chart
-    plt.figure(figsize=(8, 8))
+    plt.figure(figsize=(6, 6), dpi=100)
     plt.pie(team_data, labels=team_data.index, autopct='%1.1f%%', startangle=140, colors=[colormap(i) for i in range(len(team_data))])
 
     plt.title(f'Wins by Category for {team}', fontproperties=cnFontProp)
 
+    plt.tight_layout()
+    
     img_data = BytesIO()
     plt.savefig(img_data, format='png')
     img_data.seek(0)  # rewind to beginning of file
