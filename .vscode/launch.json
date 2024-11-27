@@ -10,7 +10,7 @@
       "type": "node"
     },
     {
-      "type": "aws-sam",
+      "type": "aws-sam", 
       "request": "direct-invoke",
       "name": "Task",
       "invokeTarget": {
@@ -22,9 +22,9 @@
         "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
-            "sessionId": "6b4d0e03-6daf-49ae-8baa-e9874ea8c6a0",
+            "sessionId": "e8ca2d6c-0acf-4a21-9a9b-da2768e75a83",
             "league_id": "29689",
-            "week": "4"        
+            "week": "5"        
           }
         },
         "environmentVariables": {
@@ -51,7 +51,7 @@
         "payload": {
           "json": {
             "rawPath": "/login",
-            "cookies": ["sessionId=6b4d0e03-6daf-49ae-8baa-e9874ea8c6a0"]
+            "cookies": ["sessionId=e8ca2d6c-0acf-4a21-9a9b-da2768e75a83"]
           }
         },
         "environmentVariables": {
@@ -78,7 +78,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/getdata",
-            "cookies": ["sessionId=6b4d0e03-6daf-49ae-8baa-e9874ea8c6a0"],
+            "cookies": ["sessionId=e8ca2d6c-0acf-4a21-9a9b-da2768e75a83"],
             "queryStringParameters": {
               "league_id": "29689",
               "week": "2"
@@ -110,7 +110,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/download",
-            "cookies": ["sessionId=6b4d0e03-6daf-49ae-8baa-e9874ea8c6a0"],
+            "cookies": ["sessionId=e8ca2d6c-0acf-4a21-9a9b-da2768e75a83"],
             "queryStringParameters": {
               "league_id": "29689",
               "week": "3"
@@ -142,7 +142,7 @@
         "payload": {
           "json": {
             "rawPath": "/api/leagues",
-            "cookies": ["sessionId=6b4d0e03-6daf-49ae-8baa-e9874ea8c6a0"]
+            "cookies": ["sessionId=e8ca2d6c-0acf-4a21-9a9b-da2768e75a83"]
           }
         },
         "environmentVariables": {

@@ -165,7 +165,7 @@ def generate_rank_chart(df, league_name):
     plt.yticks(range(int(df.values.min()), int(df.values.max()) + 1))
 
     # Add title and labels
-    plt.title(f'北伐路线 - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
+    plt.title(f'北伐! 北伐！ - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
 
     # Place the legend outside of the plot on the right side
     # plt.legend(title='Teams', bbox_to_anchor=(1.05, 1), loc='upper left', prop=cnFontProp)
