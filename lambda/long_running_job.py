@@ -81,11 +81,15 @@ def lambda_handler(event, context):
     styled_total_stats = apply_style_for_roto_df(total_stats_df, 'Stats - Total')
     update_task_status(task_id, {  "percentage": 20 })
 
+    # write to csv
+    matchup_csv_file_key = f"{season}/{league_id}/{week}/matchup.csv"
+    s3op.write_dataframe_to_csv_on_s3(battle_score_df, matchup_csv_file_key)
+
     # write to excel
-    result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
-    styled_dfs = [styled_battle_score, styled_week_point, styled_week_stats, styled_total_point, styled_total_stats]
-    sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
-    s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
+    # result_excel_file_key = f"{season}/{league_id}/{week}/{league_id}_{week}_result.xlsx"
+    # styled_dfs = [styled_battle_score, styled_week_point, styled_week_stats, styled_total_point, styled_total_stats]
+    # sheet_names = ['Matchup', 'Points - Week', 'Stats - Week', 'Points - Total', 'Stats - Total']
+    # s3op.write_styled_dataframe_to_excel_on_s3(styled_dfs, sheet_names, result_excel_file_key)
     update_task_status(task_id, {  "percentage": 25 })
 
     # write to html
@@ -174,61 +178,85 @@ def lambda_handler(event, context):
         cumulative_score_df = pd.DataFrame(0, index=week_score_df.index, columns=selected_columns)
 
         cumulative_rank_df = pd.DataFrame(index=week_score_df.index)
-
+        cumulative_matchup_df = pd.DataFrame(index=week_score_df.index)
         for i in range(start_week, end_week):   
             this_week_score_file_path = f"{season}/{league_id}/{i}/week_score.csv"
             this_week_score_df = s3op.load_dataframe_from_csv_on_s3(this_week_score_file_path)
-            if this_week_score_df is None:
+
+            this_week_matchup_file_path = f"{season}/{league_id}/{i}/matchup.csv"
+            this_week_matchup_df = s3op.load_dataframe_from_csv_on_s3(this_week_matchup_file_path)
+            if this_week_score_df is None or this_week_matchup_df is None:
                 has_missing_data = True
-                logger.debug(f"Cannot calculate cumulative score because week score data for league {league_id} week {i} is missing")
+                logger.debug(f"Cannot calculate cumulative data for league {league_id} because week {i} data is missing")
                 break  # no need to continue if one week data is missing
 
             week_selected = this_week_score_df[selected_columns]
             # Add the selected columns element-wise
             cumulative_score_df = cumulative_score_df.add(week_selected, fill_value=0)
-            cumulative_score_df[f'Point_week_{i}'] = week_selected['Point']
-            cumulative_score_df[f'Win_week_{i}'] = week_selected['Win']
 
             # calculate the rank based on the total point, for tie break, use the previous week's point
             # If there's still a tie, the process continues for each previous week until the tie is broken.
+            # so add the week point and win columns for each week for sorting, we will remove them later after sorting
+            cumulative_score_df[f'Point_week_{i}'] = week_selected['Point']
+            cumulative_score_df[f'Win_week_{i}'] = week_selected['Win']
+            cumulative_score_df['team_ids'] = team_ids
+
             sort_by_columns = ['Point']  # This is the total point column
             # Loop from i to start_week by decreasing i
             for j in range(i, start_week - 1, -1):
                 sort_by_columns.append(f'Point_week_{j}')
             sort_by_columns.append(f'Win_week_{start_week}')
+            sort_by_columns.append('team_ids') # for the first week, if point and win are the same, sort by team id
 
-            cumulative_rank_df[f'week {i}'] = cumulative_score_df[sort_by_columns].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
             # Add ranking column
             cumulative_score_df['Rank'] = cumulative_score_df[sort_by_columns].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
+            # Add the rank column for each week to the cumulative_rank_df
+            cumulative_rank_df[f'week {i}'] = cumulative_score_df['Rank']
+
+            # Make sure the index (team name) of this_week_matchup_df is the same with this_week_score_df
+            this_week_matchup_df = this_week_matchup_df.reindex(this_week_score_df.index)
+            cumulative_matchup_df[f'week {i}'] = this_week_matchup_df['分差']
         if not has_missing_data:
+
+            season_folder_key = f"{season}/{league_id}/season/"
+            s3op.remove_all_files_in_folder_in_s3(season_folder_key)
+
             # Convert 'Win', 'Lose', and 'Tie' columns to strings and create 'W-L-T' column
             cumulative_score_df['W-L-T'] = cumulative_score_df['Win'].astype(str) + '-' + cumulative_score_df['Lose'].astype(str) + '-' + cumulative_score_df['Tie'].astype(str)
   
-            # Drop some intermidiate columns
+            # Drop some intermidiate columns and only keep the stat columns, 'W-L-T', and 'Rank'
             column_names = stat_names + ['W-L-T', 'Rank']
             cumulative_score_df = cumulative_score_df[column_names]
             cumulative_score_df = cumulative_score_df.sort_values(by=['Rank'], ascending=True)
-            cumulative_score_csv_file_path = f"{season}/{league_id}/season/cumulative_score.csv"
-            s3op.write_dataframe_to_csv_on_s3(cumulative_score_df, cumulative_score_csv_file_path)
-            
+            # cumulative_score_csv_file_path = season_folder_key + "cumulative_score.csv"
+            # s3op.write_dataframe_to_csv_on_s3(cumulative_score_df, cumulative_score_csv_file_path)
             styled_cumulative_score_df = cumulative_score_df.style\
                 .apply(highlight_max_min, subset=cumulative_score_df.columns[0:-2], axis=0)\
                 .format(remove_trailing_zeros)\
                 .set_caption('Score by category')
-
-            cumulative_score_html_file_path = f"{season}/{league_id}/season/cumulative_score.html"
+            cumulative_score_html_file_path = season_folder_key + "cumulative_score.html"
             s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_score_df, cumulative_score_html_file_path)
 
-            # write to csv
-            cumulative_rank_csv_file_path = f"{season}/{league_id}/season/cumulative_rank.csv"
-            s3op.write_dataframe_to_csv_on_s3(cumulative_rank_df, cumulative_rank_csv_file_path)
-            styled_cumulative_rank_df = cumulative_rank_df.style\
-                .format(remove_trailing_zeros)\
-                .set_caption('Rank by week')
-            cumulative_rank_html_file_path = f"{season}/{league_id}/season/cumulative_rank.html"
-            s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_rank_df, cumulative_rank_html_file_path)
+            # write to image
+            rank_by_week_img_file_path = season_folder_key + "team_rank_by_weeks.png"
+            img_data = chart.generate_rank_chart(cumulative_rank_df, league_name)
+            s3op.write_image_to_s3(img_data, rank_by_week_img_file_path)
+            # write to html
+            # styled_cumulative_rank_df = cumulative_rank_df.style\
+            #     .format(remove_trailing_zeros)\
+            #     .set_caption('Rank by week')
+            # cumulative_rank_html_file_path = season_folder_key + "cumulative_rank.html"
+            # s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_rank_df, cumulative_rank_html_file_path)
 
+            # add a column to display the total score of each team (row)
+            cumulative_matchup_df['Total'] = cumulative_matchup_df.sum(axis=1)
+            styled_cumulative_matchup_df = cumulative_matchup_df.style\
+                .apply(highlight_max_min, axis=0)\
+                .format(remove_trailing_zeros)\
+                .set_caption('Lucky boy')
+            cumulative_matchup_html_file_path = season_folder_key + "cumulative_matchup.html"
+            s3op.write_styled_dataframe_to_html_on_s3(styled_cumulative_matchup_df, cumulative_matchup_html_file_path)
 
     update_task_status(task_id, { "state": 'COMPLETED', "percentage": 100  })
 

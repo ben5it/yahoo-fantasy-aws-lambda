@@ -4,6 +4,7 @@ from io import BytesIO
 import numpy as np
 import math
 import matplotlib
+import matplotlib.cm as cm
 matplotlib.use('Agg')
 from matplotlib import font_manager
 cnFontProp = font_manager.FontProperties(fname='SimSun-01.ttf')
@@ -134,3 +135,48 @@ def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
 
     return img_data
 
+
+def generate_rank_chart(df, league_name):
+
+    # # Cast the elements of the DataFrame to integer type
+    # df = df.astype(int)
+
+    # Calculate the figure width based on the number of columns
+    num_columns = len(df.columns)
+    fig_width = min(max(12, num_columns), 20)
+
+    # Create the plot
+    plt.figure(figsize=(fig_width, 8))
+
+    # Get a colormap
+    colormap = cm.get_cmap('tab20', len(df.index))
+
+    # Plot each team's data with unique colors
+    for idx, team in enumerate(df.index):
+        plt.plot(df.columns, df.loc[team], marker='o', label=team, color=colormap(idx))
+        # Annotate the team names on the left side of the plot
+        plt.annotate(team, xy=(df.columns[0], df.loc[team][0]), xytext=(-60, 0),
+                     textcoords='offset points', ha='right', va='center', color=colormap(idx), fontproperties=cnFontProp)
+
+    # Reverse the y-axis
+    plt.gca().invert_yaxis()
+
+     # Ensure rank is integer
+    plt.yticks(range(int(df.values.min()), int(df.values.max()) + 1))
+
+    # Add title and labels
+    plt.title(f'北伐路线 - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
+
+    # Place the legend outside of the plot on the right side
+    # plt.legend(title='Teams', bbox_to_anchor=(1.05, 1), loc='upper left', prop=cnFontProp)
+
+    # Adjust layout to make room for the legend
+    plt.tight_layout()
+
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png')
+    img_data.seek(0)  # rewind to beginning of file
+
+    plt.close()
+
+    return img_data
