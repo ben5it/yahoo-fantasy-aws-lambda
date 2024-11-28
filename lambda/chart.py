@@ -138,9 +138,6 @@ def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
 
 def generate_rank_chart(df, league_name):
 
-    # # Cast the elements of the DataFrame to integer type
-    # df = df.astype(int)
-
     # Calculate the figure width based on the number of columns
     num_columns = len(df.columns)
     fig_width = min(max(12, num_columns), 20)
@@ -202,7 +199,60 @@ def generate_category_pie_chart_for_team(df, team):
     plt.title(f'Wins by Category for {team}', fontproperties=cnFontProp)
 
     plt.tight_layout()
+
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png')
+    img_data.seek(0)  # rewind to beginning of file
+
+    plt.close()
+
+    return img_data
+
+
+
+
+def generate_line_chart(df, title, y_label, league_name):
+    """
+    Generate a line chart for each team in the DataFrame.
     
+    Parameters:
+    - df: The DataFrame with teams as the index and weeks as the columns.
+    - title: The title of the chart.
+    - y_label: The label for the y-axis.
+    - league_name: The name of the league for the title.
+    
+    Returns:
+    - img_data: The image data of the generated chart.
+    """
+    # Calculate the figure width based on the number of columns
+    num_columns = len(df.columns)
+    fig_width = min(max(12, num_columns), 20)
+
+    # Create the plot with higher DPI for better resolution
+    plt.figure(figsize=(fig_width, 8), dpi=150)
+
+    # Get a colormap
+    colormap = cm.get_cmap('tab20', len(df.index))
+
+    # Plot each team's data with unique colors
+    for idx, team in enumerate(df.index):
+        plt.plot(df.columns, df.loc[team], marker='o', label=team, color=colormap(idx))
+
+     # Ensure rank is integer
+    # plt.yticks(range(int(df.values.min()), int(df.values.max()) + 1))
+
+    # Add title and labels
+    plt.title(f'{title} - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
+    # plt.xlabel('Weeks', size=12)
+    plt.ylabel(y_label, size=12)
+
+    # Place the legend outside of the plot on the right side
+    plt.legend(title='Teams', bbox_to_anchor=(1.05, 1), loc='upper left', prop=cnFontProp)
+
+    # Adjust layout to make room for the legend
+    plt.tight_layout(rect=[0, 0, 0.85, 1])
+
+    # Save the plot to a BytesIO object
     img_data = BytesIO()
     plt.savefig(img_data, format='png')
     img_data.seek(0)  # rewind to beginning of file

@@ -5,6 +5,5 @@ objectpath
 pandas
 requests
 s3fs
-openpyxl
 Jinja2
 debugpy

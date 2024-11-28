@@ -276,7 +276,7 @@ def get_league_matchup(league_teams, week, game_stat_categories):
 
     # Add ranking column
     # score_df = score_df.sort_values(by=['Point', 'Win'], ascending=[False, False])
-    score_df['Rank'] = score_df[['Point', 'Win']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
+    # score_df['Rank'] = score_df[['Point', 'Win']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
     # get the raw stats for each team
     jfilter = tree.execute('$..teams..team..matchups..matchup..teams."0".team..team_stats.stats..stat')
