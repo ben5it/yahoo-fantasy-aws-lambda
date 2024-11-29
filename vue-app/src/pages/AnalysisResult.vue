@@ -4,81 +4,374 @@
       <h3 class="text-center my-3">{{ currentLeague.name }}</h3>
       <nav aria-label="..." v-if="analysisResult">
         <ul class="pagination justify-content-end">
-          <li v-for="week in weeks" :key="week" class="page-item"
-            :class="{ active: week === analysisResult.week, disabled: week > currentLeague.current_week }">
-            <a class="page-link" href="#" @click.prevent="setWeek(week)">{{ week }}</a>
+          <li
+            v-for="week in weeks"
+            :key="week"
+            class="page-item"
+            :class="{
+              active: week === analysisWeek,
+              disabled: week > currentLeague.current_week,
+            }"
+          >
+            <a class="page-link" href="#" @click.prevent="setWeek(week)">{{
+              week
+            }}</a>
           </li>
         </ul>
       </nav>
 
       <div v-if="analysisResult">
         <ul class="nav nav-tabs">
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'roto-week' }"
-              @click="activeTab = 'roto-week'">Roto-Week</a>
+          <li class="nav-item" v-if="analysisResult.week">
+            <a
+              class="nav-link"
+              :class="{ active: activeTab === 'week' }"
+              @click="setActiveTab('week', 'week_bar')"
+              >单周</a
+            >
           </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'roto-total' }"
-              @click="activeTab = 'roto-total'">Roto-Total</a>
+          <li class="nav-item" v-if="analysisResult.total">
+            <a
+              class="nav-link"
+              :class="{ active: activeTab === 'season' }"
+              @click="setActiveTab('season', 'season_bar')"
+              >整季</a
+            >
           </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'h2h-matchup' }"
-              @click="activeTab = 'h2h-matchup'">H2H-Matchup</a>
+          <li class="nav-item" v-if="analysisResult.cumulative">
+            <a
+              class="nav-link"
+              :class="{ active: activeTab === 'trend' }"
+              @click="setActiveTab('trend', 'trend_rank')"
+              >走势</a
+            >
           </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'team-radar' }" @click="activeTab = 'team-radar'">Team
-              Radar</a>
+          <li class="nav-item" v-if="analysisResult.cumulative">
+            <a
+              class="nav-link"
+              :class="{ active: activeTab === 'luck' }"
+              @click="setActiveTab('luck', 'luck_median')"
+              >运势</a
+            >
           </li>
-          <li class="nav-item">
-            <a class="nav-link" :class="{ active: activeTab === 'forecast' }"
-              @click="activeTab = 'forecast'">Forecast</a>
+          <li class="nav-item" v-if="analysisResult.forecast">
+            <a
+              class="nav-link"
+              :class="{ active: activeTab === 'forecast' }"
+              @click="activeTab = 'forecast'"
+              >神棍</a
+            >
           </li>
         </ul>
-        <div v-if="activeTab === 'roto-week' || activeTab === 'roto-total'">
+
+        <div v-if="activeTab === 'week'">
           <ul class="nav nav-pills my-3">
             <li class="nav-item">
-              <a class="nav-link" :class="{ active: activeSubTab === 'bar' }" @click="activeSubTab = 'bar'">Bar</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'week_bar' }"
+                @click="activeSubTab = 'week_bar'"
+                >战力柱状图</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" :class="{ active: activeSubTab === 'point' }"
-                @click="activeSubTab = 'point'">Point</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'week_point' }"
+                @click="activeSubTab = 'week_point'"
+                >战力明细表</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" :class="{ active: activeSubTab === 'stats' }"
-                @click="activeSubTab = 'stats'">Stats</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'week_stats' }"
+                @click="activeSubTab = 'week_stats'"
+                >原始数据表</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'week_matchup' }"
+                @click="activeSubTab = 'week_matchup'"
+                >虚拟对阵表</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'week_radar' }"
+                @click="activeSubTab = 'week_radar'"
+                >雷达图</a
+              >
             </li>
           </ul>
-          <div v-if="activeSubTab === 'bar'">
-            <img v-if="activeTab === 'roto-week'" :src="analysisResult.result.bar_chart_week" alt="Bar Chart Week"
-              class="img-fluid">
-            <img v-if="activeTab === 'roto-total'" :src="analysisResult.result.bar_chart_total" alt="Bar Chart Total"
-              class="img-fluid">
+          <div v-if="activeSubTab === 'week_bar'">
+            <img
+              :src="analysisResult.week.roto_bar"
+              alt="Bar Chart Week"
+              class="img-fluid"
+            />
           </div>
-          <div v-if="activeSubTab === 'point'">
-            <div v-if="activeTab === 'roto-week'" v-html="weekRotoPointHtml"></div>
-            <div v-if="activeTab === 'roto-total'" v-html="totalRotoPointHtml"></div>
+          <div v-if="activeSubTab === 'week_point'">
+            <p class="text-center my-3">
+              <strong>注：</strong>战力明细表采用Roto计分方式，
+              即将每项数据按强弱排名，最强的队得分最高。<br />举例来说，如联盟有18支球队，则最强的队得分为18分，最弱的队得分为1分。
+            </p>
+            <div v-html="weekPointHtml"></div>
           </div>
-          <div v-if="activeSubTab === 'stats'">
-            <div v-if="activeTab === 'roto-week'" v-html="weekRotoStatsHtml"></div>
-            <div v-if="activeTab === 'roto-total'" v-html="totalRotoStatsHtml"></div>
+          <div v-if="activeSubTab === 'week_stats'">
+            <div v-html="weekStatsHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'week_matchup'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >虚拟对阵表是计算你对阵联盟所有其他球队能取得的比分，取其中位数和你实际得分做对比。
+            </p>
+            <div v-html="weekMatchupHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'week_radar'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >雷达图是战力明细表的图形化显示，可以直观看出队伍在各项数据上的表现。
+            </p>
+            <div class="row">
+              <div
+                v-for="(image, index) in analysisResult.week.radar_charts"
+                :key="index"
+                class="col-sm-4"
+              >
+                <img :src="image" alt="Team Radar Chart" class="img-fluid" />
+              </div>
+            </div>
           </div>
         </div>
-        <div v-if="activeTab === 'h2h-matchup'" v-html="h2hMatchupHtml"></div>
-        <div v-else-if="activeTab === 'team-radar'" class="row">
-          <h5 class="text-center my-4">Comparision between total and week for each team.</h5>
-          <div v-for="(image, index) in analysisResult.result.radar_chart_teams" :key="index" class="col-sm-4">
-            <img :src="image" alt="Team Radar Chart" class="img-fluid">
+
+        <div v-if="activeTab === 'season'">
+          <ul class="nav nav-pills my-3">
+            <li class="nav-item" v-if="analysisResult.total">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_bar' }"
+                @click="activeSubTab = 'season_bar'"
+                >战力柱状图</a
+              >
+            </li>
+            <li class="nav-item" v-if="analysisResult.total">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_point' }"
+                @click="activeSubTab = 'season_point'"
+                >战力明细表</a
+              >
+            </li>
+            <li class="nav-item" v-if="analysisResult.total">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_stats' }"
+                @click="activeSubTab = 'season_stats'"
+                >原始数据表</a
+              >
+            </li>
+            <li class="nav-item" v-if="analysisResult.total">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_radar' }"
+                @click="activeSubTab = 'season_radar'"
+                >雷达图</a
+              >
+            </li>
+            <li class="nav-item" v-if="analysisResult.cumulative">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_standing' }"
+                @click="activeSubTab = 'season_standing'"
+                >排行榜</a
+              >
+            </li>
+            <li class="nav-item" v-if="analysisResult.cumulative">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'season_pie' }"
+                @click="activeSubTab = 'season_pie'"
+                >得分占比图</a
+              >
+            </li>
+          </ul>
+          <div v-if="activeSubTab === 'season_bar'">
+            <img
+              :src="analysisResult.total.roto_bar"
+              alt="Bar Chart season"
+              class="img-fluid"
+            />
+          </div>
+          <div v-if="activeSubTab === 'season_point'">
+            <p class="text-center my-3">
+              <strong>注：</strong>战力明细表采用Roto计分方式，
+              即将每项数据按强弱排名，最强的队得分最高。<br />举例来说，如联盟有18支球队，则最强的队得分为18分，最弱的队得分为1分。
+            </p>
+            <div v-html="totalPointHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'season_stats'">
+            <div v-html="totalStatsHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'season_standing'">
+            <p class="text-center my-3">
+              <strong>注：</strong>各分项的数字为您在该项数据总计赢得的分数。
+            </p>
+            <div v-html="totalStandingHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'season_radar'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >雷达图是战力明细表的图形化显示，可以直观看出队伍在各项数据上的表现。
+            </p>
+            <div class="row">
+              <div
+                v-for="(image, index) in analysisResult.total.radar_charts"
+                :key="index"
+                class="col-sm-4"
+              >
+                <img :src="image" alt="Team Radar Chart" class="img-fluid" />
+              </div>
+            </div>
+          </div>
+          <div v-if="activeSubTab === 'season_pie'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >得分占比图是计算队伍各项数据<strong>实际拿分</strong>的占比。
+            </p>
+            <div class="row">
+              <div
+                v-for="(image, index) in analysisResult.cumulative.pie_charts"
+                :key="index"
+                class="col-sm-4"
+              >
+                <img :src="image" alt="Team pie Chart" class="img-fluid" />
+              </div>
+            </div>
           </div>
         </div>
-        <div v-else-if="activeTab === 'forecast'" class="row">
-          <h5 class="text-center my-4">TOTAL stats comparision for each matchup next week.</h5>
-          <div v-for="(image, index) in analysisResult.result.radar_chart_forecast" :key="index" class="col-sm-4">
-            <img :src="image" alt="Forecast Radar Chart" class="img-fluid">
-          </div>s
+
+        <div v-if="activeTab === 'trend'">
+          <ul class="nav nav-pills my-3">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'trend_rank' }"
+                @click="activeSubTab = 'trend_rank'"
+                >排名</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'trend_point' }"
+                @click="activeSubTab = 'trend_point'"
+                >战力</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'trend_score' }"
+                @click="activeSubTab = 'trend_score'"
+                >拿分</a
+              >
+            </li>
+          </ul>
+          <div v-if="activeSubTab === 'trend_rank'">
+            <img
+              :src="analysisResult.cumulative.rank_trend"
+              alt="Rank Trend"
+              class="img-fluid"
+            />
+          </div>
+          <div v-if="activeSubTab === 'trend_point'">
+            <img
+              :src="analysisResult.cumulative.point_trend"
+              alt="Point Trend"
+              class="img-fluid"
+            />
+          </div>
+          <div v-if="activeSubTab === 'trend_score'">
+            <img
+              :src="analysisResult.cumulative.score_trend"
+              alt="Score Trend"
+              class="img-fluid"
+            />
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'luck'">
+          <ul class="nav nav-pills my-3">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'luck_median' }"
+                @click="activeSubTab = 'luck_median'"
+                >走位</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                :class="{ active: activeSubTab === 'luck_total' }"
+                @click="activeSubTab = 'luck_total'"
+                >拉跨 or 爆种</a
+              >
+            </li>
+          </ul>
+          <p class="text-center my-3">
+            都说 H2H 全靠运气，那么就让我们看看到底谁的运气最好吧！
+          </p>
+          <div v-if="activeSubTab === 'luck_median'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >走位是计算你每周中位数得分和实际得分的差值，正数表示你的运气好，负数表示你的运气差。
+            </p>
+            <div v-html="medianDiffTrendHtml"></div>
+          </div>
+          <div v-if="activeSubTab === 'luck_total'">
+            <p class="text-center my-3">
+              <strong>注：</strong
+              >计算对手在和你对阵时的战力排名和他整季的战力排名之差。正数表示你当周对手拉跨，负数表示你当周对手爆种。
+            </p>
+            <div v-html="totalDiffTrendHtml"></div>
+          </div>
+        </div>
+
+        <div v-if="activeTab === 'forecast'">
+          <p class="text-center my-3">
+            <strong>注：</strong
+            >根据<strong>过往整季</strong>数据，预测下组对阵。<strong>未考虑</strong>球员场均数据以及对阵场次，结果仅供参考(娱乐)。
+          </p>
+          <div v-if="analysisResult.forecast" class="row">
+            <div
+              v-for="(image, index) in analysisResult.forecast"
+              :key="index"
+              class="col-sm-4"
+            >
+              <img :src="image" alt="Forecast Radar Chart" class="img-fluid" />
+            </div>
+          </div>
         </div>
       </div>
-      <div v-else class="d-flex justify-content-center align-items-center" style="height: 200px;">
-        <p>Loading data from yahoo and analyzing... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+      <div v-else>
+        <div
+          class="d-flex justify-content-center align-items-center"
+          style="height: 200px"
+        >
+          <p class="text-center my-3">
+            Loading data from yahoo and analyzing...
+            <span v-if="percentage !== null">{{ percentage }}%</span>
+          </p>
+        </div>
+        <p class="text-center my-3">
+          <strong>注：</strong
+          >进度到25%左右的时候,会有单周分析结果出现。其它分析会在后台继续进行，分析完后会自动更新页面。
+        </p>
       </div>
     </div>
     <div v-else>
@@ -88,39 +381,57 @@
 </template>
 
 <script>
-import { ref, inject, computed, onMounted, onUnmounted, shallowReactive } from 'vue';
+import {
+  ref,
+  inject,
+  computed,
+  onMounted,
+  onUnmounted,
+  shallowReactive,
+} from "vue";
 
 export default {
-  name: 'AnalysisResult',
+  name: "AnalysisResult",
   setup() {
-    const leagueStore = inject('leagueStore');
+    const leagueStore = inject("leagueStore");
     const currentLeague = leagueStore.state.currentLeague;
+
+    const analysisWeek = ref(null);
     const analysisResult = ref(null);
     const intervalId = ref(null);
     const percentage = ref(null);
-    const activeTab = ref('roto-week');
-    const activeSubTab = ref('bar');
-    
-    const weekRotoPointHtml = ref(null);
-    const weekRotoStatsHtml = ref(null);
-    const totalRotoPointHtml = ref(null);
-    const totalRotoStatsHtml = ref(null);
-    const h2hMatchupHtml = ref(null);
 
-    const loadHtmlContent = async(url) => {
+    const activeTab = ref("week");
+    const activeSubTab = ref("week_bar");
+
+    // html tables for week tab
+    const weekPointHtml = ref(null);
+    const weekStatsHtml = ref(null);
+    const weekMatchupHtml = ref(null);
+
+    // html tables for season tab
+    const totalPointHtml = ref(null);
+    const totalStatsHtml = ref(null);
+    const totalStandingHtml = ref(null);
+
+    // html tables for luck tab
+    const medianDiffTrendHtml = ref(null);
+    const totalDiffTrendHtml = ref(null);
+
+    const loadHtmlContent = async (url) => {
       try {
         const response = await fetch(url);
         if (response.ok) {
           return await response.text();
         } else {
-          console.error('Failed to load HTML content:', response.statusText);
+          console.error("Failed to load HTML content:", response.statusText);
           return null;
         }
       } catch (error) {
-        console.error('Error loading HTML content:', error);
+        console.error("Error loading HTML content:", error);
         return null;
       }
-    }
+    };
 
     const fetchData = async (week) => {
       try {
@@ -130,21 +441,71 @@ export default {
         }
         const response = await fetch(url);
         const data = await response.json();
-        if (data.state === 'COMPLETED') {
-          analysisResult.value = data;
+
+        if (data.state === "COMPLETED") {
           clearInterval(intervalId.value);
+        }
 
-          weekRotoPointHtml.value = await loadHtmlContent(data.result.roto_point_week);
-          weekRotoStatsHtml.value = await loadHtmlContent(data.result.roto_stats_week);
-          totalRotoPointHtml.value = await loadHtmlContent(data.result.roto_point_total);
-          totalRotoStatsHtml.value = await loadHtmlContent(data.result.roto_stats_total);
-          h2hMatchupHtml.value = await loadHtmlContent(data.result.h2h_matchup_week);
+        analysisWeek.value = data.week;
 
-        } else if (data.state === 'IN_PROGRESS') {
-            percentage.value = data.percentage;
+        // no result yet
+        if (Object.keys(data.result).length === 0) {
+          percentage.value = data.percentage;
+        } else {
+          analysisResult.value = data.result;
+
+          if (data.result.week) {
+            if (!weekPointHtml.value) {
+              weekPointHtml.value = await loadHtmlContent(
+                data.result.week.roto_point
+              );
+            }
+
+            if (!weekStatsHtml.value) {
+              weekStatsHtml.value = await loadHtmlContent(
+                data.result.week.roto_stats
+              );
+            }
+            if (!weekMatchupHtml.value) {
+              weekMatchupHtml.value = await loadHtmlContent(
+                data.result.week.matchup_score
+              );
+            }
+          }
+
+          if (data.result.total) {
+            if (!totalPointHtml.value) {
+              totalPointHtml.value = await loadHtmlContent(
+                data.result.total.roto_point
+              );
+            }
+            if (!totalStatsHtml.value) {
+              totalStatsHtml.value = await loadHtmlContent(
+                data.result.total.roto_stats
+              );
+            }
+          }
+
+          if (data.result.cumulative) {
+            if (!totalStandingHtml.value) {
+              totalStandingHtml.value = await loadHtmlContent(
+                data.result.cumulative.standing
+              );
+            }
+            if (!medianDiffTrendHtml.value) {
+              medianDiffTrendHtml.value = await loadHtmlContent(
+                data.result.cumulative.median_diff_trend
+              );
+            }
+            if (!totalDiffTrendHtml.value) {
+              totalDiffTrendHtml.value = await loadHtmlContent(
+                data.result.cumulative.total_diff_trend
+              );
+            }
+          }
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -195,7 +556,7 @@ export default {
     const setWeek = (week) => {
       if (week <= currentLeague.current_week) {
         // clear the previous result
-        analysisResult.value = null; 
+        analysisResult.value = null;
         percentage.value = null;
 
         // Call the function immediately
@@ -206,21 +567,32 @@ export default {
       }
     };
 
+    const setActiveTab = (tab, subTab) => {
+      activeTab.value = tab;
+      activeSubTab.value = subTab;
+    };
+
     return {
       currentLeague,
+      analysisWeek,
       analysisResult,
       percentage,
       activeTab,
       activeSubTab,
-      weekRotoPointHtml,
-      weekRotoStatsHtml,
-      totalRotoPointHtml,
-      totalRotoStatsHtml,
-      h2hMatchupHtml,
+
+      weekPointHtml,
+      weekStatsHtml,
+      weekMatchupHtml,
+      totalPointHtml,
+      totalStatsHtml,
+      totalStandingHtml,
+      medianDiffTrendHtml,
+      totalDiffTrendHtml,
       weeks,
-      setWeek
+      setWeek,
+      setActiveTab,
     };
-  }
+  },
 };
 </script>
 

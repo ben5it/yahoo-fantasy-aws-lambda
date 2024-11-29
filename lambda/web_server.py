@@ -118,6 +118,7 @@ def lambda_handler(event, context):
             item = resp['Item']
             state = item['state']
             percentage = int(item['percentage'])
+            status = { "state": state, "percentage": percentage }
             last_updated = int(item['last_updated'])
             now = int(time.time())
             if state == 'COMPLETED':
@@ -127,7 +128,7 @@ def lambda_handler(event, context):
                 # otherwise, check the last updated time, if it is still less than 30 minutes after last update,
                 # consider it as up to date because we don't want to run the analysis too frequently
                 if week_status == 'postevent' or now - last_updated < 1800: 
-                    return get_result(league_id, week)
+                    return get_result(league_id, week, status)
 
                 else: # consider it as out of date, need to run analysis again
                     return run_analysis(parms)
@@ -135,13 +136,10 @@ def lambda_handler(event, context):
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
             # so this should be either 'INITIATED' or 'IN PROGRESS', no need to run again
             else: 
-                if now - last_updated > 120: # if there is no update in more than 2 minutes, then maybe a problem already occurs, need to rerun
+                if now - last_updated > 120: # if there is no update in more than 2 minutes, then maybe a problem already occurs, need to re-run
                     return run_analysis(parms)
                 else:
-                    return {
-                        'statusCode': 202,
-                        'body': json.dumps({ "state": state, "percentage": percentage })
-                    }
+                    return get_result(league_id, week, status)
         # no task id found in db, that means this is the first time to run
         else:
             return run_analysis(parms)
@@ -241,50 +239,72 @@ def remove_session(sessionId):
     table.delete_item(Key={"sessionId": sessionId})
 
 
-def get_result(league_id, week):
+def get_result(league_id, week, status):
 
-    base_url = os.environ.get("BASE_URL") + '/'
-    season = utils.get_season()
+    # the state and percentage determines what data is available
+    state = status.get('state', 'INITIATED')
+    percentage = status.get('percentage', 0)
 
-    prefix = f"data/{season}/{league_id}/{week}/"
+    resp_code = 200 if state == 'COMPLETED' else 202
 
-    # result excel file key
-    result_excel_file_key = prefix + f"{league_id}_{week}_result.xlsx"
-
-    roto_point_week_html_file_path = prefix + f"roto_point_wk{week:02d}.html"
-    roto_stats_week_html_file_path = prefix + f"roto_stats_wk{week:02d}.html"
-    roto_point_total_html_file_path = prefix + f"roto_point_total.html"
-    roto_stats_total_html_file_path = prefix + f"roto_stats_total.html"
-    h2h_matchup_week_html_file_path = prefix + f"h2h_matchup_wk{week:02d}.html"
-
-    # bar chart file path
-    roto_week_bar_file_path = prefix + f"roto_bar_wk{week:02d}.png"
-    roto_total_bar_file_path = prefix + "roto_bar_total.png"
-
-    radar_chart_teams = get_files_with_pattern(prefix, "radar_team_")
-    radar_chart_forcast = get_files_with_pattern(prefix, "radar_forecast_")
-
-    data = {
-        "state": 'COMPLETED',
+    resp_data = {
         "league_id": league_id,
         "week": week,
-        "result": {
-            "roto_point_week": base_url + roto_point_week_html_file_path,
-            "roto_stats_week": base_url + roto_stats_week_html_file_path,
-            "roto_point_total": base_url + roto_point_total_html_file_path,
-            "roto_stats_total": base_url + roto_stats_total_html_file_path,
-            "h2h_matchup_week": base_url + h2h_matchup_week_html_file_path,
-            "result_excel": base_url+ result_excel_file_key,
-            "bar_chart_week": base_url+ roto_week_bar_file_path,
-            "bar_chart_total": base_url + roto_total_bar_file_path,
-            "radar_chart_teams": [ base_url + file_key for file_key in radar_chart_teams ],
-            "radar_chart_forecast": [ base_url + file_key for file_key in radar_chart_forcast ]
-        }
+        'result': {},
+        **status
     }
 
+
+    season = utils.get_season()
+    # base_url = os.environ.get("BASE_URL") + "/"
+    week_prefix =   f"data/{season}/{league_id}/{week}/"
+    season_prefix =  f"data/{season}/{league_id}/season/"
+    
+    # week data is only available when the analysis is completed or in progress with more than 25% done
+    # here 25% needs to be synced with the value in the long running task
+    if state == 'COMPLETED' or ( state == 'IN_PROGRESS' and percentage > 25):
+        radar_charts = get_files_with_pattern(week_prefix, "radar_team_")
+        resp_data['result']['week'] = {
+                "roto_bar": week_prefix + "roto_bar.png",
+                "roto_stats": week_prefix + "roto_stats.html",
+                "roto_point": week_prefix + "roto_point.html",
+                "matchup_score": week_prefix + "matchup_score.html",
+                "radar_charts": radar_charts
+        }
+
+    # total data is only available when the analysis is completed or in progress with more than 50% done
+    # here 50% needs to be synced with the value in the long running task
+    if state == 'COMPLETED' or ( state == 'IN_PROGRESS' and percentage >= 50):
+        radar_charts = get_files_with_pattern(season_prefix, "radar_team_")
+        resp_data['result']['total'] = {
+                "roto_bar": season_prefix + "roto_bar.png",
+                "roto_stats": season_prefix + "roto_stats.html",
+                "roto_point": season_prefix + "roto_point.html",
+                "radar_charts": radar_charts
+        }
+
+    # cumulative data is only available when the analysis is completed or in progress with more than 75% done
+    # here 75% needs to be synced with the value in the long running task
+    if state == 'COMPLETED' or ( state == 'IN_PROGRESS' and percentage >= 75):
+        pie_charts = get_files_with_pattern(season_prefix, "pie_chart_")
+        resp_data['result']['cumulative'] = {
+                "rank_trend": season_prefix + "rank_trend.png",
+                "point_trend": season_prefix + "point_trend.png",
+                "score_trend": season_prefix + "score_trend.png",
+                "standing": season_prefix + "standing.html",
+                "median_diff_trend": season_prefix + "median_diff_trend.html",
+                "total_diff_trend": season_prefix + "total_diff_trend.html",
+                "pie_charts": pie_charts
+        }
+
+    # forecast data is only available when the analysis is completed
+    if state == 'COMPLETED': 
+        resp_data['result']['forecast'] = get_files_with_pattern(season_prefix, "radar_forecast_")
+
+    # logger.info(json.dumps(resp_data, ensure_ascii=False, indent=4))
     return {
-        'statusCode': 200,
-        'body': json.dumps(data, ensure_ascii=False, indent=4)
+        'statusCode': resp_code,
+        'body': json.dumps(resp_data, ensure_ascii=False, indent=4)
     }
 
 def get_files_with_pattern(prefix, pattern):

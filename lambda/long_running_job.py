@@ -204,9 +204,9 @@ def lambda_handler(event, context):
 
         cumulative_score_by_category_df = pd.DataFrame(0, index=team_names, columns=stat_names)
 
-        rank_over_weeks_df = pd.DataFrame(index=team_names)
-        point_over_weeks_df = pd.DataFrame(index=team_names)
-        score_over_weeks_df = pd.DataFrame(index=team_names)
+        rank_trend_df = pd.DataFrame(index=team_names)
+        point_trend_df = pd.DataFrame(index=team_names)
+        score_trend_df = pd.DataFrame(index=team_names)
 
         # Below two dataframes are used to calculate the luck index for each team
         # Luck in H2H means you meet the right opponent at the right time
@@ -273,10 +273,10 @@ def lambda_handler(event, context):
             # calculate current rank at a specific week
             cumulative_score_by_category_df['Rank'] = cumulative_score_by_category_df[columns_for_sort].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
-            # Add the rank column for each week to the rank_over_weeks_df
-            rank_over_weeks_df[f'week {i}'] = cumulative_score_by_category_df['Rank']
-            point_over_weeks_df[f'week {i}'] = this_week_point_df['Total']
-            score_over_weeks_df[f'week {i}'] = this_week_score_df['Point']
+            # Add the rank column for each week to the rank_trend_df
+            rank_trend_df[f'week {i}'] = cumulative_score_by_category_df['Rank']
+            point_trend_df[f'week {i}'] = this_week_point_df['Total']
+            score_trend_df[f'week {i}'] = this_week_score_df['Point']
             diff_from_median_over_weeks_df[f'week {i}'] = this_week_matchup_df['分差']
 
             # calculate the rank diff from total rank
@@ -301,19 +301,19 @@ def lambda_handler(event, context):
         if not has_missing_data:
 
             # generate rank chrt for cumulative weeks
-            rank_over_weeks_img_file_path = season_folder_key + "rank_over_weeks.png"
-            img_data = chart.generate_rank_chart(rank_over_weeks_df, league_name)
-            s3op.write_image_to_s3(img_data, rank_over_weeks_img_file_path)
+            rank_trend_img_file_path = season_folder_key + "rank_trend.png"
+            img_data = chart.generate_rank_chart(rank_trend_df, league_name)
+            s3op.write_image_to_s3(img_data, rank_trend_img_file_path)
 
             # generate point chart for cumulative weeks
-            point_over_weeks_img_file_path = season_folder_key + "point_over_weeks.png"
-            img_data = chart.generate_line_chart(point_over_weeks_df, '每周战力', 'Point', league_name)
-            s3op.write_image_to_s3(img_data, point_over_weeks_img_file_path)
+            point_trend_img_file_path = season_folder_key + "point_trend.png"
+            img_data = chart.generate_line_chart(point_trend_df, '每周战力', 'Point', league_name)
+            s3op.write_image_to_s3(img_data, point_trend_img_file_path)
 
             # generate score chart for cumulative weeks
-            score_over_weeks_img_file_path = season_folder_key + "score_over_weeks.png"
-            img_data = chart.generate_line_chart(score_over_weeks_df, '每周得分', 'Score', league_name)
-            s3op.write_image_to_s3(img_data, score_over_weeks_img_file_path)
+            score_trend_img_file_path = season_folder_key + "score_trend.png"
+            img_data = chart.generate_line_chart(score_trend_df, '每周得分', 'Score', league_name)
+            s3op.write_image_to_s3(img_data, score_trend_img_file_path)
 
             # add a column to display the total score of each team (row)
             diff_from_median_over_weeks_df['Total'] = diff_from_median_over_weeks_df.sum(axis=1)
@@ -321,7 +321,7 @@ def lambda_handler(event, context):
                 .apply(highlight_max_min, axis=0)\
                 .format(remove_trailing_zeros)\
                 .set_caption('要是打XXX，我就赢了')
-            cumulative_matchup_html_file_path = season_folder_key + "score_diff_with_median_by_week.html"
+            cumulative_matchup_html_file_path = season_folder_key + "median_diff_trend.html"
             s3op.write_styled_dataframe_to_html_on_s3(styled_diff_from_median_over_weeks_df, cumulative_matchup_html_file_path)
 
 
@@ -331,15 +331,15 @@ def lambda_handler(event, context):
                 .apply(highlight_max_min, axis=0)\
                 .format(remove_trailing_zeros)\
                 .set_caption('我去，我对手这周怎么这么爆')
-            week_diff_of_opponent_by_week_html_file_path = season_folder_key + "week_diff_of_opponent_by_week.html"
-            s3op.write_styled_dataframe_to_html_on_s3(styled_diff_from_total_over_weeks_df, week_diff_of_opponent_by_week_html_file_path)
+            total_diff_trend_html_file_path = season_folder_key + "total_diff_trend.html"
+            s3op.write_styled_dataframe_to_html_on_s3(styled_diff_from_total_over_weeks_df, total_diff_trend_html_file_path)
 
 
             # Convert 'Win', 'Lose', and 'Tie' columns to strings and create 'W-L-T' column
             cumulative_score_by_category_df['W-L-T'] = (
-                cumulative_score_by_category_df['Win'].astype(str) + '-' +
-                cumulative_score_by_category_df['Lose'].astype(str) + '-' +
-                cumulative_score_by_category_df['Tie'].astype(str)
+                cumulative_score_by_category_df['Win'].astype(int).astype(str) + '-' +
+                cumulative_score_by_category_df['Lose'].astype(int).astype(str) + '-' +
+                cumulative_score_by_category_df['Tie'].astype(int).astype(str)
             )
   
             # Drop some intermidiate columns and only keep the stat columns, 'W-L-T', and 'Rank'
@@ -369,9 +369,9 @@ def lambda_handler(event, context):
 
         del cumulative_score_by_category_df, \
             styled_cumulative_score_by_category_df,\
-            rank_over_weeks_df, \
-            point_over_weeks_df, \
-            score_over_weeks_df, \
+            rank_trend_df, \
+            point_trend_df, \
+            score_trend_df, \
             diff_from_median_over_weeks_df, \
             diff_from_total_over_weeks_df, \
             styled_diff_from_median_over_weeks_df, \
@@ -403,7 +403,7 @@ def lambda_handler(event, context):
         team_score_1 = total_point_df.loc[team_name_1].values.tolist()
         team_score_2 = total_point_df.loc[team_name_2].values.tolist()
         img_data = chart.get_radar_chart(stat_names, [team_score_1, team_score_2], len(team_names), labels, chart_title)
-        radar_chart_file_path = week_folder_key + f"radar_forecast_{int(idx/2+1):02d}.png"
+        radar_chart_file_path = season_folder_key + f"radar_forecast_{int(idx/2+1):02d}.png"
         s3op.write_image_to_s3(img_data, radar_chart_file_path)
         percentage = int(start_progress + step * (idx + 2))
         update_task_status(task_id, {  "percentage": percentage })

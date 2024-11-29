@@ -1,6 +1,9 @@
 <template>
   <div class="container">
     <h2 class="text-center my-4">Leagues</h2>
+    <p class="text-center">
+      <strong>注：</strong>暂只支持 Head-to-Head 盟，且仅限于已完成选秀的联赛。
+    </p>
     <div v-if="leagues?.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">
         <div class="league-card">

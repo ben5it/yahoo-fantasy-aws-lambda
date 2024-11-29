@@ -93,8 +93,8 @@ Resources:
         # MaxTTL: 31536000 # 1 year
         # MinTTL: 60 # 1 minute
         MinTTL: 60
-        MaxTTL: 60
-        DefaultTTL: 60
+        MaxTTL: 86400
+        DefaultTTL: 86400
         ParametersInCacheKeyAndForwardedToOrigin:
           EnableAcceptEncodingBrotli: true
           EnableAcceptEncodingGzip: true
@@ -392,10 +392,7 @@ Resources:
       KeySchema:
         - KeyType: 'HASH'
           AttributeName: 'sessionId'
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      BillingMode: PAY_PER_REQUEST
       TimeToLiveSpecification:
         Enabled: true
         AttributeName: 'expireAt'
@@ -412,10 +409,7 @@ Resources:
       KeySchema:
         - KeyType: 'HASH'
           AttributeName: 'taskId'
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      BillingMode: PAY_PER_REQUEST
       TimeToLiveSpecification:
         Enabled: true
         AttributeName: 'expireAt'

@@ -1,5 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
+import resp_data_array from "./mock-data.js";
 
 const app = express();
 const port = 3001;
@@ -70,7 +71,7 @@ app.get("/api/leagues", (req, res) => {
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
-        current_week: 4,
+        current_week: 6,
         start_week: "1",
         end_week: "23",
       },
@@ -86,7 +87,7 @@ app.get("/api/leagues", (req, res) => {
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
-        current_week: 4,
+        current_week: 6,
         start_week: "1",
         end_week: "23",
       },
@@ -115,7 +116,7 @@ app.get("/api/leagues", (req, res) => {
         scoring_type: "head",
         start_date: "2024-10-22",
         end_date: "2025-04-13",
-        current_week: 4,
+        current_week: 6,
         start_week: "1",
         end_week: "23",
       },
@@ -124,6 +125,7 @@ app.get("/api/leagues", (req, res) => {
     res.status(401).json({ error: "Unauthorized" });
   }
 });
+
 
 app.get("/api/getdata", (req, res) => {
   const sessionId = req.cookies.sessionId;
@@ -134,62 +136,8 @@ app.get("/api/getdata", (req, res) => {
     valid_sessionId
   );
   if (sessionId === valid_sessionId) {
-    getDataCalled++;
-    let percentage = (getDataCalled % 4) * 25;
-
-    if (percentage === 0) {
-
-      getDataCalled = 0;
-
-      res.json({
-        "state": "COMPLETED",
-        "league_id": 29689,
-        "week": 4,
-        "result": {
-            "roto_point_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_point_wk04.html",
-            "roto_stats_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_stats_wk04.html",
-            "roto_point_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_point_total.html",
-            "roto_stats_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_stats_total.html",
-            "h2h_matchup_week": "https://fantasy.laohuang.org/data/2024/29689/4/h2h_matchup_wk04.html",
-            "result_excel": "https://fantasy.laohuang.org/data/2024/29689/4/29689_4_result.xlsx",
-            "bar_chart_week": "https://fantasy.laohuang.org/data/2024/29689/4/roto_bar_wk04.png",
-            "bar_chart_total": "https://fantasy.laohuang.org/data/2024/29689/4/roto_bar_total.png",
-            "radar_chart_teams": [
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_01.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_02.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_03.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_04.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_05.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_06.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_07.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_08.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_09.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_10.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_11.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_12.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_13.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_14.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_15.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_16.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_17.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_team_18.png"
-            ],
-            "radar_chart_forecast": [
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_01.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_02.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_03.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_04.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_05.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_06.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_07.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_08.png",
-                "https://fantasy.laohuang.org/data/2024/29689/4/radar_forecast_09.png"
-            ]
-        }
-    });
-    } else {
-      res.json({ state: "IN_PROGRESS", percentage: percentage });
-    }
+    let resp_data = resp_data_array[getDataCalled++ % 5];
+      res.json(resp_data);
   } else {
     res.json({ authenticated: false });
   }
