@@ -603,8 +603,8 @@ export default {
         // Call the function immediately
         fetchData(week);
 
-        // Set the interval to call the function every 5 seconds
-        intervalId.value = setInterval(() => fetchData(week), 5000);
+        // Set the interval to call the function every 7 seconds
+        intervalId.value = setInterval(() => fetchData(week), 7000);
       }
     };
 

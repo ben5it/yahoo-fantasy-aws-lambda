@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import boto3
@@ -124,13 +124,42 @@ def lambda_handler(event, context):
             if state == 'COMPLETED':
                 week_status = item.get('week_status')
 
+                # would like to avoid unnecessary analysis, there are three cases to consider
+                # 1. postevent: the data is already updated after the week ends 
+                # 2. midevent: 
+                #    a. the data is updated in less than 30 minute, we can consider it 'as' up to date
+                #    b. the data is updated after the prior NBA match , and now is before the next match,
+                #       so there is no match played after the data is updated, we can consider it as up to date
+                #       But we have no way to get the time of prior NBA match played, and the time of the next match.
+                #       so we use a workaround here.
+                #       the NBA match is usually played in the evening, starting from 7:00 AM to 13:00 PM (China time)
+                #       so if the last updated time is after 13:00 PM, and now is before 7:00 AM,  
+                #       and now - last_update < 1 day, we can consider it as up to date
+                # 
+                #  so we can't check this case
                 # if it is postevent, then that means the data is already updated after the week ends
                 # otherwise, check the last updated time, if it is still less than 30 minutes after last update,
                 # consider it as up to date because we don't want to run the analysis too frequently
-                if week_status == 'postevent' or now - last_updated < 1800: 
-                    return get_result(league_id, week, status)
+                run_analysis = True
+                if week_status == 'postevent':
+                    run_analysis = False
+                else:
+                    if now - last_updated < 1800: 
+                        run_analysis = False
+                    elif now - last_updated < 86400: # 1 day
+                        # Define the Shanghai timezone offset
+                        shanghai_timezone = timezone(timedelta(hours=8))
+                        # utc_zone = timezone.utc
+                        
+                        last_update_hour = datetime.fromtimestamp(last_updated, shanghai_timezone).hour
+                        now_hour = datetime.fromtimestamp(now, shanghai_timezone).hour
+                        if last_update_hour > 13 and (now_hour >= last_update_hour or now_hour < 7):
+                            run_analysis = False
 
-                else: # consider it as out of date, need to run analysis again
+
+                if run_analysis == False:
+                    return get_result(league_id, week, status)
+                else: 
                     return run_analysis(parms)
             
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
