@@ -209,8 +209,6 @@ def generate_category_pie_chart_for_team(df, team):
     return img_data
 
 
-
-
 def generate_line_chart(df, title, y_label, league_name):
     """
     Generate a line chart for each team in the DataFrame.
@@ -234,12 +232,23 @@ def generate_line_chart(df, title, y_label, league_name):
     # Get a colormap
     colormap = cm.get_cmap('tab20', len(df.index))
 
+    # Define line styles and markers
+    line_styles = ['-', '-.']
+    markers = [ 'o', 's', 'H', 'D', 'd', '^', 'v', '<', '>', 'p', '*', 'h', '+', 'x', 'X', '|', '_']
+
+    # Calculate the midpoint to split the line styles
+    midpoint = len(df.index) // 2
+
     # Plot each team's data with unique colors
     for idx, team in enumerate(df.index):
-        plt.plot(df.columns, df.loc[team], marker='o', label=team, color=colormap(idx))
+        if idx < midpoint:
+            line_style = line_styles[0]  # First line style for the first half
+            marker = markers[idx % len(markers)]
+        else:
+            line_style = line_styles[1]  # Second line style for the second half
+            marker = markers[(idx - midpoint) % len(markers)]
+        plt.plot(df.columns, df.loc[team], marker=marker, label=team, color=colormap(idx), linestyle=line_style)
 
-     # Ensure rank is integer
-    # plt.yticks(range(int(df.values.min()), int(df.values.max()) + 1))
 
     # Add title and labels
     plt.title(f'{title} - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
@@ -247,10 +256,10 @@ def generate_line_chart(df, title, y_label, league_name):
     plt.ylabel(y_label, size=12)
 
     # Place the legend outside of the plot on the right side
-    plt.legend(title='Teams', bbox_to_anchor=(1.05, 1), loc='upper left', prop=cnFontProp)
+    plt.legend(title='Teams', bbox_to_anchor=(1.02, 1), loc='upper left', prop=cnFontProp)
 
     # Adjust layout to make room for the legend
-    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.tight_layout(rect=[0, 0, 0.95, 1])
 
     # Save the plot to a BytesIO object
     img_data = BytesIO()
