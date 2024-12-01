@@ -136,10 +136,14 @@ app.get("/api/getdata", (req, res) => {
     valid_sessionId
   );
   if (sessionId === valid_sessionId) {
-    let resp_data = resp_data_array[getDataCalled++ % 5];
-      res.json(resp_data);
+    const index = getDataCalled % resp_data_array.length;
+    getDataCalled++;
+
+    let resp_data = resp_data_array[index];
+    const code = index  === resp_data_array.length - 1 ? 200 : 202;
+      res.status(code).json(resp_data);
   } else {
-    res.json({ authenticated: false });
+    res.status(401).json({ authenticated: false });
   }
 });
 

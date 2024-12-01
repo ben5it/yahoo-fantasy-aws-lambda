@@ -426,8 +426,6 @@ import {
   ref,
   inject,
   computed,
-  onMounted,
-  onUnmounted,
   shallowReactive,
 } from "vue";
 
@@ -439,7 +437,6 @@ export default {
 
     const analysisWeek = ref(null);
     const analysisResult = ref(null);
-    const intervalId = ref(null);
     const percentage = ref(null);
 
     const activeTab = ref("week");
@@ -481,69 +478,76 @@ export default {
           url += `&week=${week}`;
         }
         const response = await fetch(url);
-        const data = await response.json();
 
-        if (data.state === "COMPLETED") {
-          clearInterval(intervalId.value);
-        }
+        if (response.ok) {
+          // 202 means the analysis is still in progress, so send another request after 5 seconds
+          if (response.status == 202) {
+            setTimeout(fetchData, 5000);
+          }
 
-        analysisWeek.value = data.week;
+          const data = await response.json();
 
-        // no result yet
-        if (Object.keys(data.result).length === 0) {
-          percentage.value = data.percentage;
+          analysisWeek.value = data.week;
+
+          // no result yet
+          if (Object.keys(data.result).length === 0) {
+            percentage.value = data.percentage;
+          } else {
+            analysisResult.value = data.result;
+
+            if (data.result.week) {
+              if (!weekPointHtml.value) {
+                weekPointHtml.value = await loadHtmlContent(
+                  data.result.week.roto_point
+                );
+              }
+
+              if (!weekStatsHtml.value) {
+                weekStatsHtml.value = await loadHtmlContent(
+                  data.result.week.roto_stats
+                );
+              }
+              if (!weekMatchupHtml.value) {
+                weekMatchupHtml.value = await loadHtmlContent(
+                  data.result.week.matchup_score
+                );
+              }
+            }
+
+            if (data.result.total) {
+              if (!totalPointHtml.value) {
+                totalPointHtml.value = await loadHtmlContent(
+                  data.result.total.roto_point
+                );
+              }
+              if (!totalStatsHtml.value) {
+                totalStatsHtml.value = await loadHtmlContent(
+                  data.result.total.roto_stats
+                );
+              }
+            }
+
+            if (data.result.cumulative) {
+              if (!totalStandingHtml.value) {
+                totalStandingHtml.value = await loadHtmlContent(
+                  data.result.cumulative.standing
+                );
+              }
+              if (!medianDiffTrendHtml.value) {
+                medianDiffTrendHtml.value = await loadHtmlContent(
+                  data.result.cumulative.median_diff_trend
+                );
+              }
+              if (!totalDiffTrendHtml.value) {
+                totalDiffTrendHtml.value = await loadHtmlContent(
+                  data.result.cumulative.total_diff_trend
+                );
+              }
+            }
+          }
         } else {
-          analysisResult.value = data.result;
-
-          if (data.result.week) {
-            if (!weekPointHtml.value) {
-              weekPointHtml.value = await loadHtmlContent(
-                data.result.week.roto_point
-              );
-            }
-
-            if (!weekStatsHtml.value) {
-              weekStatsHtml.value = await loadHtmlContent(
-                data.result.week.roto_stats
-              );
-            }
-            if (!weekMatchupHtml.value) {
-              weekMatchupHtml.value = await loadHtmlContent(
-                data.result.week.matchup_score
-              );
-            }
-          }
-
-          if (data.result.total) {
-            if (!totalPointHtml.value) {
-              totalPointHtml.value = await loadHtmlContent(
-                data.result.total.roto_point
-              );
-            }
-            if (!totalStatsHtml.value) {
-              totalStatsHtml.value = await loadHtmlContent(
-                data.result.total.roto_stats
-              );
-            }
-          }
-
-          if (data.result.cumulative) {
-            if (!totalStandingHtml.value) {
-              totalStandingHtml.value = await loadHtmlContent(
-                data.result.cumulative.standing
-              );
-            }
-            if (!medianDiffTrendHtml.value) {
-              medianDiffTrendHtml.value = await loadHtmlContent(
-                data.result.cumulative.median_diff_trend
-              );
-            }
-            if (!totalDiffTrendHtml.value) {
-              totalDiffTrendHtml.value = await loadHtmlContent(
-                data.result.cumulative.total_diff_trend
-              );
-            }
-          }
+          console.error("Failed to fetch data:", response.statusText);
+          return;
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -581,19 +585,6 @@ export default {
       return weeksArray;
     });
 
-    onMounted(() => {
-      if (currentLeague) {
-        // set interval to featch this week's data every 8 seconds
-        intervalId.value = setInterval(fetchData, 8000);
-      }
-    });
-
-    onUnmounted(() => {
-      if (intervalId.value) {
-        clearInterval(intervalId.value);
-      }
-    });
-
     const setWeek = (week) => {
       if (week <= currentLeague.current_week) {
         // clear the previous result
@@ -602,9 +593,6 @@ export default {
 
         // Call the function immediately
         fetchData(week);
-
-        // Set the interval to call the function every 7 seconds
-        intervalId.value = setInterval(() => fetchData(week), 7000);
       }
     };
 
