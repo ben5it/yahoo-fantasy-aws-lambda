@@ -140,12 +140,12 @@ def lambda_handler(event, context):
                 # if it is postevent, then that means the data is already updated after the week ends
                 # otherwise, check the last updated time, if it is still less than 30 minutes after last update,
                 # consider it as up to date because we don't want to run the analysis too frequently
-                run_analysis = True
+                should_run_analysis = True
                 if week_status == 'postevent':
-                    run_analysis = False
+                    should_run_analysis = False
                 else:
                     if now - last_updated < 1800: 
-                        run_analysis = False
+                        should_run_analysis = False
                     elif now - last_updated < 86400: # 1 day
                         # Define the Shanghai timezone offset
                         shanghai_timezone = timezone(timedelta(hours=8))
@@ -154,10 +154,10 @@ def lambda_handler(event, context):
                         last_update_hour = datetime.fromtimestamp(last_updated, shanghai_timezone).hour
                         now_hour = datetime.fromtimestamp(now, shanghai_timezone).hour
                         if last_update_hour > 13 and (now_hour >= last_update_hour or now_hour < 7):
-                            run_analysis = False
+                            should_run_analysis = False
 
 
-                if run_analysis == False:
+                if should_run_analysis == False:
                     return get_result(league_id, week, status)
                 else: 
                     return run_analysis(parms)
