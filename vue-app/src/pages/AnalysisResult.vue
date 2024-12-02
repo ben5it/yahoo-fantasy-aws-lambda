@@ -480,9 +480,9 @@ export default {
         const response = await fetch(url);
 
         if (response.ok) {
-          // 202 means the analysis is still in progress, so send another request after 5 seconds
+          // 202 means the analysis is still in progress, so send another request after 7 seconds
           if (response.status == 202) {
-            setTimeout(fetchData, 5000);
+            setTimeout(fetchData, 7000);
           }
 
           const data = await response.json();

@@ -182,9 +182,8 @@ def lambda_handler(event, context):
     # only calculate when there are at least two post event weeks,
     # and the week to be analyzed is latest week can be analyzed
     start_week = int(league_info['start_week'])
-    end_week = league_info['current_week']
     default_week = utils.get_default_week(league_id)
-    if end_week > start_week + 1 and week == default_week:
+    if default_week > start_week and week == default_week:
 
         # will will output
         #  - ranks by week, 
@@ -226,9 +225,9 @@ def lambda_handler(event, context):
 
         start_progress = 45
         end_progress = 55
-        step = (end_progress - start_progress) / (end_week - start_week)
+        step = (end_progress - start_progress) / (default_week + 1 - start_week)
 
-        for i in range(start_week, end_week):   
+        for i in range(start_week, default_week + 1):   
             this_week_score_file_path = f"{season}/{league_id}/{i}/week_score.csv"
             this_week_score_df = s3op.load_dataframe_from_csv_on_s3(this_week_score_file_path)
 
