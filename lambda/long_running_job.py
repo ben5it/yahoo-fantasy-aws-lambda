@@ -81,6 +81,8 @@ def lambda_handler(event, context):
     s3op.write_dataframe_to_csv_on_s3(week_score_df, week_score_file_path)
 
     # output raw stats to s3
+    roto_stats_week_csv_file_path = week_folder_key + f"roto_stats.csv"
+    s3op.write_dataframe_to_csv_on_s3(week_stats_df, roto_stats_week_csv_file_path)
     roto_stats_week_html_file_path = week_folder_key + f"roto_stats.html"
     styled_week_stats = apply_style_for_roto_df(week_stats_df, f'Stats - Week {week}')
     s3op.write_styled_dataframe_to_html_on_s3(styled_week_stats, roto_stats_week_html_file_path)

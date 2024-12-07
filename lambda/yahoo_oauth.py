@@ -21,7 +21,7 @@ def login():
     data = { 
         'client_id' : os.environ.get('CLIENT_ID'),
         'response_type' : 'code', 
-        'redirect_uri' : os.environ.get('BASE_URL') + "/callback", 
+        'redirect_uri' : os.environ.get('BASE_URL') + "/api/callback", 
         'scope': "openid"
     }
     login_url  = cfg.AUTHORIZE_URL + '?' + urlencode(data, quote_via=quote)
@@ -59,7 +59,7 @@ def callback(queryString):
         data =  {
             "code": code,
             "grant_type": "authorization_code",
-            "redirect_uri": os.environ.get('BASE_URL') + "/callback"
+            "redirect_uri": os.environ.get('BASE_URL') + "/api/callback"
         }
     
         raw_token = requests.post(cfg.ACCESS_TOKEN_URL, data=data, headers = headers)

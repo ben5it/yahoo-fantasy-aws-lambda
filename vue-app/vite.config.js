@@ -16,11 +16,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/login': {
+      '/api/login': {
         target: 'http://localhost:3001',
         changeOrigin: true
       },
-      '/check_auth': {
+      '/api/check_auth': {
         target: 'http://localhost:3001',
         changeOrigin: true
       },

@@ -18,17 +18,17 @@ let getDataCalled = 0;
 // Helper function to generate a random session ID
 const generateSessionId = () => Math.random().toString(36).substring(2, 15);
 
-app.get("/login", (req, res) => {
+app.get("/api/login", (req, res) => {
   valid_sessionId = generateSessionId();
-  console.log("Request /login: GenareateSessionId", valid_sessionId);
+  console.log("Request /api/login: GenareateSessionId", valid_sessionId);
   res.cookie("sessionId", valid_sessionId, { httpOnly: true, secure: true });
   res.redirect("/");
 });
 
-app.get("/check_auth", (req, res) => {
+app.get("/api/check_auth", (req, res) => {
   const sessionId = req.cookies.sessionId;
   console.log(
-    "Request /check_auth: CurrentSessionId",
+    "Request /api/check_auth: CurrentSessionId",
     sessionId,
     "ValidSessionId",
     valid_sessionId

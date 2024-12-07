@@ -47,7 +47,7 @@
         </div>
       <div class="mb-4"></div>
       <div>
-          <a href="/login">
+          <a href="/api/login">
               <img src="/images/signIn.png" class="img-fluid mw-25" style="height: 40px;" />
           </a>
       </div>
@@ -68,7 +68,7 @@ export default {
 
     const checkAuth = async () => {
       try {
-        const response = await fetch('/check_auth');
+        const response = await fetch('/api/check_auth');
         const data = await response.json();
         auth.setAuthenticated(data.authenticated);
         if (data.authenticated) {

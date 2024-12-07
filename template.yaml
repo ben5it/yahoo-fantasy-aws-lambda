@@ -69,9 +69,21 @@ Resources:
     Properties:
       StageName: $default
       CorsConfiguration:
-        AllowMethods: "'GET,POST,OPTIONS'"
-        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigins: "'*'"
+        AllowOrigins:
+          - !Sub 'https://${AlternateDomainName}'
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+          - X-Amz-User-Agent
+        MaxAge: 600
+        AllowCredentials: false
 
   WebSiteBucketOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
@@ -83,30 +95,57 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
-# CloudFront Cache Policy that forwards the Content-Type header
-  S3OriginCachePolicy:
-    Type: AWS::CloudFront::CachePolicy
+
+  SecureResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
     Properties:
-      CachePolicyConfig:
-        Name: StaticWebsiteCachePolicy
-        # DefaultTTL: 86400 # 1 day
-        # MaxTTL: 31536000 # 1 year
-        # MinTTL: 60 # 1 minute
-        MinTTL: 60
-        MaxTTL: 86400
-        DefaultTTL: 86400
-        ParametersInCacheKeyAndForwardedToOrigin:
-          EnableAcceptEncodingBrotli: true
-          EnableAcceptEncodingGzip: true
-          HeadersConfig:
-            HeaderBehavior: whitelist
-            Headers:
-              - "Content-Type" # Ensure Content-Type header is forwarded to respect S3 MIME types
-          CookiesConfig:
-            CookieBehavior: none
-          QueryStringsConfig:
-            QueryStringBehavior: none
-              
+      ResponseHeadersPolicyConfig:
+        Name: SecureResponseHeadersPolicy
+        CorsConfig:
+          AccessControlAllowCredentials: false
+          AccessControlAllowHeaders:
+            Items:
+              - "Content-Type"
+              - "Authorization"
+              - "X-Amz-Date"
+              - "X-Api-Key"
+              - "X-Amz-Security-Token"
+          AccessControlAllowMethods:
+            Items:
+              - GET
+              - POST
+              - OPTIONS
+          AccessControlAllowOrigins:
+            Items:
+              - !Sub 'https://${AlternateDomainName}'
+          AccessControlExposeHeaders:
+            Items:
+              - "Content-Length"
+              - "Date"
+          AccessControlMaxAgeSec: 600
+          OriginOverride: true
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self';"
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: no-referrer
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 63072000
+            IncludeSubdomains: true
+            Preload: true
+            Override: true
+          XSSProtection:
+            Protection: true
+            ModeBlock: true
+            Override: true
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -128,84 +167,14 @@ Resources:
           AllowedMethods:
             - GET
             - HEAD
+            - OPTIONS
           CachedMethods:
             - GET
             - HEAD
           Compress: true
-          CachePolicyId: !Ref S3OriginCachePolicy # Use custom cache policy with Content-Type header
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # AWS managed CachingOptimized cache policy ID
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # AWS managed CORS-S3Origin origin request policy ID
         CacheBehaviors:
-          - PathPattern: '/login'
-            TargetOriginId: ApiGatewayOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - HEAD
-              - DELETE
-              - POST
-              - GET
-              - OPTIONS
-              - PUT
-              - PATCH
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: none
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
-          - PathPattern: '/callback'
-            TargetOriginId: ApiGatewayOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - HEAD
-              - DELETE
-              - POST
-              - GET
-              - OPTIONS
-              - PUT
-              - PATCH
-            ForwardedValues:
-              QueryString: true
-              Cookies:
-                Forward: all
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
-          - PathPattern: '/check_auth'
-            TargetOriginId: ApiGatewayOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - HEAD
-              - DELETE
-              - POST
-              - GET
-              - OPTIONS
-              - PUT
-              - PATCH
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: all
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
-          - PathPattern: '/logout'
-            TargetOriginId: ApiGatewayOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - HEAD
-              - DELETE
-              - POST
-              - GET
-              - OPTIONS
-              - PUT
-              - PATCH
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: all
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
           - PathPattern: '/api/*'
             TargetOriginId: ApiGatewayOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -217,13 +186,34 @@ Resources:
               - OPTIONS
               - PUT
               - PATCH
-            ForwardedValues:
-              QueryString: true
-              Cookies:
-                Forward: all
-            MinTTL: 0
-            MaxTTL: 0
-            DefaultTTL: 0
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS managed CachingDisabled cache policy ID
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AWS managed AllViewerExceptHostHeader origin request policy ID
+            ResponseHeadersPolicyId: !Ref SecureResponseHeadersPolicy
+          - PathPattern: '/data/**/*.png'
+            TargetOriginId: S3WebSiteOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS managed CachingDisabled cache policy ID
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # AWS managed CORS-S3Origin origin request policy ID
+          - PathPattern: '/data/**/*.html'
+            TargetOriginId: S3WebSiteOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS managed CachingDisabled cache policy ID
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # AWS managed CORS-S3Origin origin request policy ID
         ViewerCertificate:
           AcmCertificateArn: !Ref 'SSLCertificateArn'
           SslSupportMethod: sni-only
@@ -339,7 +329,7 @@ Resources:
           Type: HttpApi
           Properties:
             ApiId: !Ref ApiGateway
-            Path: /{proxy+}
+            Path: /api/{proxy+}
             Method: ANY
       Environment:
         Variables:

@@ -22,19 +22,19 @@ def lambda_handler(event, context):
     # logger.debug(context)
 
     path = event['rawPath']
-    logger.debug('rawPath: %s', path)
+    logger.info('rawPath: %s', path)
 
-    if path =='/login':
+    if path =='/api/login':
         return yOauth.login()
 
-    if path == '/callback':
+    if path =='/api/callback':
         return yOauth.callback(event['rawQueryString'])
 
     sessionId = get_session_id_from_cookies(event)
     logger.debug('SessionId: %s', sessionId)
     valid, access_token, user_info = utils.is_valid_session(sessionId)
 
-    if path == '/check_auth':
+    if path =='/api/check_auth':
         if valid == True:
             return {
                 'statusCode': 200,
@@ -46,7 +46,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({'authenticated': False})
             }
     
-    if path == '/logout':
+    if path =='/api/logout':
         if valid == True:
             # remove session from db
             remove_session(sessionId)
@@ -138,13 +138,13 @@ def lambda_handler(event, context):
                 # 
                 #  so we can't check this case
                 # if it is postevent, then that means the data is already updated after the week ends
-                # otherwise, check the last updated time, if it is still less than 30 minutes after last update,
+                # otherwise, check the last updated time, if it is still less than 15 minutes after last update,
                 # consider it as up to date because we don't want to run the analysis too frequently
                 should_run_analysis = True
                 if week_status == 'postevent':
                     should_run_analysis = False
                 else:
-                    if now - last_updated < 1800: 
+                    if now - last_updated < 900: 
                         should_run_analysis = False
                     elif now - last_updated < 86400: # 1 day
                         # Define the Shanghai timezone offset

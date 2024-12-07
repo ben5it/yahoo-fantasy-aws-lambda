@@ -153,7 +153,7 @@ def refresh_token(sessionId, current_refresh_token):
     data =  {
         "refresh_token": current_refresh_token,
         "grant_type": "refresh_token",
-        "redirect_uri": os.environ.get('BASE_URL') + "/callback"
+        "redirect_uri": os.environ.get('BASE_URL') + "/api/callback"
     }
 
     raw_token = requests.post(cfg.ACCESS_TOKEN_URL, data=data, headers = headers)
