@@ -66,11 +66,11 @@ def get_league_teams(league_key, league_id):
     teams, last_updated = s3op.load_json_from_s3(file_path)
 
     if teams and last_updated:
-        # Check if the data is less than one day old,
+        # Check if the data is less than one hour old,
         # because users can change the team name and logo frequently
         now = datetime.now(timezone.utc)
         time_difference = now - last_updated
-        if time_difference < timedelta(days=1):
+        if time_difference < timedelta(hours=1):
             logger.debug("Using cached teams data")
             return teams
         

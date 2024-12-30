@@ -251,6 +251,45 @@ def lambda_handler(event, context):
                 logger.debug(f"Cannot calculate cumulative data for league {league_id} because week {i} data is missing")
                 break  # no need to continue if one week data is missing
 
+            # bug fix: if the team name get changed in the middle of the season, 
+            # then we cannot find match in other weeeks
+            # so convert team names in week data to teams names in current
+
+            # first convert match up data
+            this_week_matchup_array = this_week_info_json['matchups']
+            for idx in range(0, len(this_week_matchup_array), 2 ): 
+                team_name_1 = this_week_matchup_array[idx]
+                team_name_2 = this_week_matchup_array[idx+1]
+
+                # bug fix: if the team name get changed in the middle of the season, 
+                # the then team name in the current week may not be in the total point dataframe
+                # so we need to convert team name to team id for this week,
+                # and then convert team id to team name for total point dataframe
+                row_index_1 = this_week_point_df.index.get_loc(team_name_1)
+                row_index_2 = this_week_point_df.index.get_loc(team_name_2)
+                team_name_1 = team_names[row_index_1]
+                team_name_2 = team_names[row_index_2]
+                this_week_matchup_array[idx] = team_name_1
+                this_week_matchup_array[idx+1] = team_name_2
+
+            # then convert team names in matchup data, matchup data has been sorted by cloumn '分差'
+            # so the order is different with others now.
+            matchup_team_names = this_week_matchup_df.index.tolist()
+            current_team_names = this_week_point_df.index.tolist()
+            updated_matchup_team_names = list(map(lambda x: team_names[current_team_names.index(x)], matchup_team_names))
+            this_week_matchup_df = this_week_matchup_df.reset_index(drop=True)
+            this_week_matchup_df.index = updated_matchup_team_names
+            # also need to update the columns
+            # Number of columns to replace
+            N = len(updated_matchup_team_names)
+            this_week_matchup_df.columns = updated_matchup_team_names + list(this_week_matchup_df.columns[N:])
+
+            # lastly convert team names in score and point data
+            this_week_score_df = this_week_score_df.reset_index(drop=True)
+            this_week_score_df.index = team_names
+            this_week_point_df = this_week_point_df.reset_index(drop=True)
+            this_week_point_df.index = team_names
+
             # Add the selected columns element-wise
             cumulative_score_by_category_df = cumulative_score_by_category_df.add(this_week_score_df, fill_value=0)
 
@@ -283,7 +322,7 @@ def lambda_handler(event, context):
             # calculate the rank diff from total rank
             diff_from_total_over_weeks_df[f'week {i}'] = 0
             this_week_point_df['Rank'] = this_week_point_df[['Total']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
-            this_week_matchup_array = this_week_info_json['matchups']
+
             for idx in range(0, len(this_week_matchup_array), 2 ): 
                 team_name_1 = this_week_matchup_array[idx]
                 team_name_2 = this_week_matchup_array[idx+1]
