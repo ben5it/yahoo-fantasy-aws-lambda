@@ -163,15 +163,19 @@ def lambda_handler(event, context):
                     return run_analysis(parms)
             
             # we only have three status, 'INITIATED', 'IN PROGRESS', 'COMPLETED'
-            # so this should be either 'INITIATED' or 'IN PROGRESS', no need to run again
+            # so this should be either 'INITIATED' or 'IN PROGRESS'
             else: 
-                # if there is no update in more than 4 minutes, then maybe a problem already occurs, need to re-run
-                if now - last_updated > 240: 
+                # if there is no update in more than 6 minutes, then maybe there was a problem in last run, need to re-run
+                if now - last_updated > 360: 
+                    return run_analysis(parms)
+                # if there is no update in more than 3 minutes, but less than 6 minutes, then maybe a problem occurs in the current run, return error
+                elif now - last_updated > 180: 
                     return {
                         'statusCode': 501,
                         'body': json.dumps("Server error, please try again later. If problem persists, please contact the administrator.")
                     }
                 else:
+                # current run is still in progress, return the status
                     return get_result(league_id, week, status)
         # no task id found in db, that means this is the first time to run
         else:
