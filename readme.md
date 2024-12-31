@@ -30,6 +30,15 @@ The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI
 
 * [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
 
+Run locally:
+sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json
+
+Run With debug
+sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json --debug
+
+Web Server:
+
+
 ## Deploy
 
 
