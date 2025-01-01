@@ -357,7 +357,10 @@ def lambda_handler(event, context):
                     # Check if the column contains any float values,
                     # for float values, if the difference is 0.001 (max decimial is 3) or 0.01 (max decimal is 2), then consider as win by 1
                     if pd.api.types.is_float_dtype(this_week_stats_df[column]):
-                        max_decimal_places = this_week_stats_df[column].apply(lambda x: len(str(Decimal(str(x)).normalize()).split(".")[1]) if "." in str(x) else 0).max()
+                        max_decimal_places = this_week_stats_df[column].apply(
+                            lambda x: len(str(x).split(".")[1])
+                            if "." in str(x) and len(str(x).split(".")) > 1 else 0
+                        ).max()
                         compator =  10.0 ** -max_decimal_places
                         diff = value_1 - value_2
                         if math.isclose(diff, compator):

@@ -158,6 +158,7 @@ def lambda_handler(event, context):
 
 
                 if should_run_analysis == False:
+                    logger.info(f"Data for league {league_id} week {week} is up to date, return the result.")
                     return get_result(league_id, week, status)
                 else: 
                     return run_analysis(parms)
@@ -167,18 +168,22 @@ def lambda_handler(event, context):
             else: 
                 # if there is no update in more than 6 minutes, then maybe there was a problem in last run, need to re-run
                 if now - last_updated > 360: 
+                    logger.info(f"Data for league {league_id} week {week} is not updated in more than 6 minutes, re-run the analysis.")
                     return run_analysis(parms)
                 # if there is no update in more than 3 minutes, but less than 6 minutes, then maybe a problem occurs in the current run, return error
                 elif now - last_updated > 180: 
+                    logger.error(f"Data for league {league_id} week {week} is not updated in more than 3 minutes, check the status.")
                     return {
                         'statusCode': 501,
                         'body': json.dumps("Server error, please try again later. If problem persists, please contact the administrator.")
                     }
                 else:
                 # current run is still in progress, return the status
+                    logger.info(f"Analysis for league {league_id} week {week} is in progress, return the status.")
                     return get_result(league_id, week, status)
         # no task id found in db, that means this is the first time to run
         else:
+            logger.info(f"Data for league {league_id} week {week} is not found, run the analysis.")
             return run_analysis(parms)
         
     elif path == '/api/download':

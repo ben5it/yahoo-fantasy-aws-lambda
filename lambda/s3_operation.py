@@ -129,6 +129,9 @@ def write_image_to_s3(img_data, file_key):
         logger.debug(f"Successfully saved image to {bucket_name}/{file_key}")
     except Exception as e:
         logger.debug(f"An error occurred: {e}")
+    finally:
+        # Free up memory by deleting img_data
+        del img_data
 
 
 def write_styled_dataframe_to_html_on_s3(styled_df, file_key, roto = True):
