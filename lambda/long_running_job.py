@@ -6,6 +6,8 @@ import json
 import os
 import pandas as pd
 import numpy as np
+import math
+from decimal import Decimal
 
 import chart as chart
 import compute as cmpt
@@ -353,13 +355,14 @@ def lambda_handler(event, context):
                     factor = 1 if sort_order == '1' else -1
 
                     # Check if the column contains any float values,
-                    # for float values, if the difference is 0.001, then consider
-                    # as win by 1
+                    # for float values, if the difference is 0.001 (max decimial is 3) or 0.01 (max decimal is 2), then consider as win by 1
                     if pd.api.types.is_float_dtype(this_week_stats_df[column]):
+                        max_decimal_places = this_week_stats_df[column].apply(lambda x: len(str(Decimal(str(x)).normalize()).split(".")[1]) if "." in str(x) else 0).max()
+                        compator =  10.0 ** -max_decimal_places
                         diff = value_1 - value_2
-                        if 0 < diff <= 0.001:
+                        if math.isclose(diff, compator):
                             narrow_victory_team_1 += 1 * factor
-                        elif 0 > diff >= -0.001:
+                        elif math.isclose(diff, -compator):
                             narrow_victory_team_1 -= 1 * factor
                     else: # for integer values, if the difference is 1, then consider as win by 1
                         if value_1 == value_2 + 1:
@@ -653,3 +656,5 @@ def apply_style_for_h2h_df(df, tier_point, caption):
         .set_caption(caption)
 
     return styled_df
+
+
