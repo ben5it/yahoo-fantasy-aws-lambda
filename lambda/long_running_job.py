@@ -330,7 +330,7 @@ def lambda_handler(event, context):
 
             # calculate the rank diff from total rank
             diff_from_total_over_weeks_df[f'week {i}'] = 0
-            narrow_victory_over_weeks_df[f'week {i}'] = 0
+            # narrow_victory_over_weeks_df[f'week {i}'] = 0
             this_week_point_df['Rank'] = this_week_point_df[['Total']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
             for idx in range(0, len(this_week_matchup_array), 2 ): 
@@ -372,9 +372,9 @@ def lambda_handler(event, context):
                             narrow_victory_team_1 += 1 * factor
                         elif value_1 == value_2-1:
                             narrow_victory_team_1 -= 1 * factor
-                    
-                narrow_victory_over_weeks_df.at[team_name_1, f'week {i}'] = narrow_victory_team_1
-                narrow_victory_over_weeks_df.at[team_name_2, f'week {i}'] = -narrow_victory_team_1
+                if narrow_victory_team_1 != 0:  
+                    narrow_victory_over_weeks_df.at[team_name_1, f'week {i}'] = narrow_victory_team_1
+                    narrow_victory_over_weeks_df.at[team_name_2, f'week {i}'] = -narrow_victory_team_1
 
             percentage = int(start_progress + step * (i + 1))
             update_task_status(task_id, {  "percentage": percentage })
