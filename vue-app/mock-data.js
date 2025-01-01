@@ -262,6 +262,7 @@ let resp_data_40 = {
             "standing": "data/2024/29689/season/standing.html",
             "median_diff_trend": "data/2024/29689/season/median_diff_trend.html",
             "total_diff_trend": "data/2024/29689/season/total_diff_trend.html",
+            "narrow_victory_trend": "data/2024/29689/season/narrow_victory_trend.html",
             "pie_charts": [
                 "data/2024/29689/season/pie_chart_01.png",
                 "data/2024/29689/season/pie_chart_02.png",

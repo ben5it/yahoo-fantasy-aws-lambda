@@ -331,6 +331,7 @@ def get_result(league_id, week, status):
                 "standing": season_prefix + "standing.html",
                 "median_diff_trend": season_prefix + "median_diff_trend.html",
                 "total_diff_trend": season_prefix + "total_diff_trend.html",
+                "narrow_victory_trend": season_prefix + "narrow_victory_trend.html",
                 "pie_charts": pie_charts
         }
 

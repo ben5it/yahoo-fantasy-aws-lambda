@@ -346,7 +346,15 @@
                     class="nav-link"
                     :class="{ active: activeSubTab === 'luck_total' }"
                     @click="activeSubTab = 'luck_total'"
-                    >拉跨 or 爆种</a
+                    >爆种</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a
+                    class="nav-link"
+                    :class="{ active: activeSubTab === 'luck_narrow_victory' }"
+                    @click="activeSubTab = 'luck_narrow_victory'"
+                    >险胜</a
                   >
                 </li>
               </ul>
@@ -366,6 +374,14 @@
                   >计算对手在和你对阵时的战力排名和他整季的战力排名之差。正数表示你当周对手拉跨，负数表示你当周对手爆种。
                 </p>
                 <div v-html="totalDiffTrendHtml"></div>
+              </div>
+              <div v-if="activeSubTab === 'luck_narrow_victory'">
+                <p class="text-center my-3">
+                  <strong>注：</strong
+                  >险胜是是指你某项数据刚好就赢了一点点，比如你当周篮板<b>200</b>个，你对手<b>199</b>个，那么你当周的险胜次数就加1。
+                  倘若当周你有三项数据险胜对面，但是另有一项数据被对面险胜，那么你当周的险胜次数就是2。
+                </p>
+                <div v-html="narrowVictorTrendHtml"></div>
               </div>
             </div>
             <div v-else>
@@ -455,6 +471,7 @@ export default {
     // html tables for luck tab
     const medianDiffTrendHtml = ref(null);
     const totalDiffTrendHtml = ref(null);
+    const narrowVictorTrendHtml = ref(null);
 
     const loadHtmlContent = async (url) => {
       try {
@@ -543,6 +560,11 @@ export default {
                   data.result.cumulative.total_diff_trend
                 );
               }
+              if (!narrowVictorTrendHtml.value) {
+                narrowVictorTrendHtml.value = await loadHtmlContent(
+                  data.result.cumulative.narrow_victory_trend
+                );
+              }
             }
           }
         } else {
@@ -617,6 +639,7 @@ export default {
       totalStandingHtml,
       medianDiffTrendHtml,
       totalDiffTrendHtml,
+      narrowVictorTrendHtml,
       weeks,
       setWeek,
       setActiveTab,

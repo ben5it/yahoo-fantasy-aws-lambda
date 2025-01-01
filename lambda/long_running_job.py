@@ -223,6 +223,7 @@ def lambda_handler(event, context):
 
         diff_from_median_over_weeks_df = pd.DataFrame(index=team_names)
         diff_from_total_over_weeks_df  = pd.DataFrame(index=team_names)
+        narrow_victory_over_weeks_df  = pd.DataFrame(index=team_names)
 
 
         start_progress = 45
@@ -236,6 +237,9 @@ def lambda_handler(event, context):
             this_week_point_file_path = f"{season}/{league_id}/{i}/roto_point.csv"
             this_week_point_df = s3op.load_dataframe_from_csv_on_s3(this_week_point_file_path)
 
+            this_week_stats_file_path = f"{season}/{league_id}/{i}/roto_stats.csv"
+            this_week_stats_df = s3op.load_dataframe_from_csv_on_s3(this_week_stats_file_path)
+
             this_week_matchup_file_path = f"{season}/{league_id}/{i}/matchup_score.csv"
             this_week_matchup_df = s3op.load_dataframe_from_csv_on_s3(this_week_matchup_file_path)
 
@@ -245,6 +249,7 @@ def lambda_handler(event, context):
             if (this_week_score_df is None or 
                 this_week_matchup_df is None or 
                 this_week_point_df is None or 
+                this_week_stats_df is None or 
                 this_week_info_json is None):
 
                 has_missing_data = True
@@ -289,6 +294,8 @@ def lambda_handler(event, context):
             this_week_score_df.index = team_names
             this_week_point_df = this_week_point_df.reset_index(drop=True)
             this_week_point_df.index = team_names
+            this_week_stats_df = this_week_stats_df.reset_index(drop=True)
+            this_week_stats_df.index = team_names
 
             # Add the selected columns element-wise
             cumulative_score_by_category_df = cumulative_score_by_category_df.add(this_week_score_df, fill_value=0)
@@ -321,11 +328,13 @@ def lambda_handler(event, context):
 
             # calculate the rank diff from total rank
             diff_from_total_over_weeks_df[f'week {i}'] = 0
+            narrow_victory_over_weeks_df[f'week {i}'] = 0
             this_week_point_df['Rank'] = this_week_point_df[['Total']].apply(tuple, axis=1).rank(method='min', ascending=False).astype(int)
 
             for idx in range(0, len(this_week_matchup_array), 2 ): 
                 team_name_1 = this_week_matchup_array[idx]
                 team_name_2 = this_week_matchup_array[idx+1]
+
                 team_1_total_rank = total_point_df.loc[team_name_1]['Rank']
                 team_2_total_rank = total_point_df.loc[team_name_2]['Rank']
                 team_1_week_rank = this_week_point_df.loc[team_name_1]['Rank']
@@ -334,6 +343,32 @@ def lambda_handler(event, context):
                 team_2_diff = team_2_week_rank - team_2_total_rank
                 diff_from_total_over_weeks_df.at[team_name_1, f'week {i}'] = team_2_diff
                 diff_from_total_over_weeks_df.at[team_name_2, f'week {i}'] = team_1_diff
+
+                narrow_victory_team_1 = 0
+                for column in this_week_stats_df.columns:
+                    value_1 = this_week_stats_df.loc[team_name_1, column]
+                    value_2 = this_week_stats_df.loc[team_name_2, column]
+                    sort_order = sort_orders[column]
+                    # sort_order = '1' means the bigger the better, else (='0') means the smaller the better
+                    factor = 1 if sort_order == '1' else -1
+
+                    # Check if the column contains any float values,
+                    # for float values, if the difference is 0.001, then consider
+                    # as win by 1
+                    if pd.api.types.is_float_dtype(this_week_stats_df[column]):
+                        diff = value_1 - value_2
+                        if 0 < diff <= 0.001:
+                            narrow_victory_team_1 += 1 * factor
+                        elif 0 > diff >= -0.001:
+                            narrow_victory_team_1 -= 1 * factor
+                    else: # for integer values, if the difference is 1, then consider as win by 1
+                        if value_1 == value_2 + 1:
+                            narrow_victory_team_1 += 1 * factor
+                        elif value_1 == value_2-1:
+                            narrow_victory_team_1 -= 1 * factor
+                    
+                narrow_victory_over_weeks_df.at[team_name_1, f'week {i}'] = narrow_victory_team_1
+                narrow_victory_over_weeks_df.at[team_name_2, f'week {i}'] = -narrow_victory_team_1
 
             percentage = int(start_progress + step * (i + 1))
             update_task_status(task_id, {  "percentage": percentage })
@@ -373,6 +408,15 @@ def lambda_handler(event, context):
                 .set_caption('我去，我对手这周怎么这么爆')
             total_diff_trend_html_file_path = season_folder_key + "total_diff_trend.html"
             s3op.write_styled_dataframe_to_html_on_s3(styled_diff_from_total_over_weeks_df, total_diff_trend_html_file_path)
+
+            # add a column to display the total score of each team (row)
+            narrow_victory_over_weeks_df['Total'] = narrow_victory_over_weeks_df.sum(axis=1)
+            styled_narrow_victory_over_weeks_df = narrow_victory_over_weeks_df.style\
+                .apply(highlight_max_min, subset=narrow_victory_over_weeks_df.columns[-1:], axis=0)\
+                .format(remove_trailing_zeros)\
+                .set_caption('不多不少，刚好赢你')
+            total_diff_trend_html_file_path = season_folder_key + "narrow_victory_trend.html"
+            s3op.write_styled_dataframe_to_html_on_s3(styled_narrow_victory_over_weeks_df, total_diff_trend_html_file_path)
 
 
             # Convert 'Win', 'Lose', and 'Tie' columns to strings and create 'W-L-T' column
@@ -414,8 +458,10 @@ def lambda_handler(event, context):
             score_trend_df, \
             diff_from_median_over_weeks_df, \
             diff_from_total_over_weeks_df, \
+            narrow_victory_over_weeks_df, \
             styled_diff_from_median_over_weeks_df, \
-            styled_diff_from_total_over_weeks_df
+            styled_diff_from_total_over_weeks_df, \
+            styled_narrow_victory_over_weeks_df
         gc.collect()
     update_task_status(task_id, {  "percentage": 75 })
 
