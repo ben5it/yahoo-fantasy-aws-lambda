@@ -154,7 +154,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等...</p>
+              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -271,7 +271,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等...</p>
+              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -326,7 +326,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等...</p>
+              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -385,7 +385,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等...</p>
+              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -410,7 +410,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等...</p>
+              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
         </div>
@@ -505,11 +505,9 @@ export default {
           const data = await response.json();
 
           analysisWeek.value = data.week;
-
+          percentage.value = data.percentage;
           // no result yet
-          if (Object.keys(data.result).length === 0) {
-            percentage.value = data.percentage;
-          } else {
+          if (Object.keys(data.result).length > 0) {
             analysisResult.value = data.result;
 
             if (data.result.week) {
