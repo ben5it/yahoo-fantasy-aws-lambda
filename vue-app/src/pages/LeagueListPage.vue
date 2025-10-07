@@ -14,14 +14,11 @@
           <p>Type: {{ league.scoring_type }}</p>
           <p>Status: {{ league.draft_status }}</p>
           <button
-            :class="[
-              'btn',
-              league.scoring_type === 'head' && league.draft_status === 'postdraft'? 'btn-primary' : 'btn-secondary',
-            ]"
-            :disabled="league.scoring_type !== 'head' || league.draft_status !== 'postdraft'"
+            :class="['btn', leagueButtonState(league).cls]"
+            :disabled="leagueButtonState(league).disabled"
             @click="analyzeLeague(league)"
           >
-            {{ league.draft_status !== 'postdraft'? "Not Available" : league.scoring_type === "head" ? "Analyze" : "Stay Tuned" }}
+            {{ leagueButtonState(league).label }}
           </button>
         </div>
       </div>
@@ -67,13 +64,29 @@ export default {
       router.push("/result");
     };
 
-    // onBeforeMount(() => {
-    //   fetchLeagues();
-    // });
+    const leagueButtonState = (league) => {
+      // 1. scoring type not supported
+      if (league.scoring_type !== 'head') {
+        return { label: 'Not Supported', disabled: true, cls: 'btn-secondary' };
+      }
+      // 2. draft not finished
+      if (league.draft_status !== 'postdraft') {
+        return { label: 'Not Drafted', disabled: true, cls: 'btn-secondary' };
+      }
+      // 3. season not started
+      const today = new Date();
+      const start = new Date(league.start_date); // format: YYYY-MM-DD
+      if (today < start) {
+        return { label: 'Not Started', disabled: true, cls: 'btn-secondary' };
+      }
+      // 4. ready
+      return { label: 'Analyze', disabled: false, cls: 'btn-primary' };
+    };
 
     return {
       leagues,
       analyzeLeague,
+      leagueButtonState,
     };
   },
 };
