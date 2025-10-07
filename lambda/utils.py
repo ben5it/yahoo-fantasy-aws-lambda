@@ -18,7 +18,7 @@ logger = cfg.logger
 def get_season():
     today =date.today()
     season = today.year
-    if today.month < 10 or (today.month == 10 and today.day < 26): # nba season usually starts at the end of Oct
+    if today.month < 9 : # yahoo fantasy season usually starts at the end of Oct
         season -= 1   
     
     return season
