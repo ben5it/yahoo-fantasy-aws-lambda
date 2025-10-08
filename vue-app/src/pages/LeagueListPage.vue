@@ -76,7 +76,7 @@ export default {
       // 3. season not started
       const today = new Date();
       const start = new Date(league.start_date); // format: YYYY-MM-DD
-      if (today < start) {
+      if (today <= start) {
         return { label: 'Not Started', disabled: true, cls: 'btn-secondary' };
       }
       // 4. ready
