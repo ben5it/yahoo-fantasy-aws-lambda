@@ -29,8 +29,13 @@ def get_default_week(league_id):
     league_info_file_key = f"{season}/{league_id}/league_info.json"
     league_info, last_updated = s3op.load_json_from_s3(league_info_file_key)
 
-    current_week = int(league_info['current_week'])
     start_week = int(league_info['start_week'])
+    current_week = int(league_info['current_week'])
+
+    # we don't support playoff, so if current week is in playoff, set it to the week before playoff
+    playoff_start_week = int(league_info['playoff_start_week'])
+    if current_week >= playoff_start_week and playoff_start_week > start_week:
+        current_week = playoff_start_week - 1
 
     # Define the Pacific timezone offset
     pacific_offset = timedelta(hours=-8)
