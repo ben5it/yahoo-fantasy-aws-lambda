@@ -1,5 +1,5 @@
 # Use the official Python image from the Docker Hub
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.13
 
 # Copy requirements.txt
 COPY requirements_web_server.txt ${LAMBDA_TASK_ROOT}/requirements.txt
