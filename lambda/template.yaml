@@ -313,7 +313,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${AWS::StackName}-task'
       RetentionInDays: 1
 
-  
+
   # lambda functions
   WebServerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -343,7 +343,7 @@ Resources:
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_web_server
-      DockerContext: ./lambda/
+      DockerContext: .
       DockerTag: !Sub ${AWS::StackName}-web-server
   
   LongRunningJobFunction:
@@ -366,7 +366,7 @@ Resources:
       Role: !GetAtt LambdaExecRole.Arn
     Metadata:
       Dockerfile: Dockerfile_long_running_job
-      DockerContext: ./lambda/
+      DockerContext: .
       DockerTag: !Sub ${AWS::StackName}-task
 
   # dynamodb tables

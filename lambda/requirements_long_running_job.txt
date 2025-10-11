@@ -1,9 +1,7 @@
-boto3
+Jinja2
 matplotlib
 numpy
 objectpath
 pandas
 requests
 s3fs
-Jinja2
-debugpy

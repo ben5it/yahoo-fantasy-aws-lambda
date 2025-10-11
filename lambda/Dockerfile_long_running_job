@@ -1,14 +1,14 @@
 # Use the official Python image from the Docker Hub
-FROM public.ecr.aws/lambda/python:3.13
+FROM public.ecr.aws/lambda/python:3.12
 
 # Copy requirements.txt and install the specified packages
 COPY requirements_long_running_job.txt ${LAMBDA_TASK_ROOT}/requirements.txt
 RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy shared code and function code
-COPY config.py fantasy_api.py s3_operation.py utils.py ${LAMBDA_TASK_ROOT}/
-COPY long_running_job.py chart.py compute.py ${LAMBDA_TASK_ROOT}/
-COPY SimSun-01.ttf ${LAMBDA_TASK_ROOT}/
+COPY ./src/config.py ./src/fantasy_api.py ./src/s3_operation.py ./src/utils.py ${LAMBDA_TASK_ROOT}/
+COPY ./src/long_running_job.py ./src/chart.py ./src/compute.py ${LAMBDA_TASK_ROOT}/
+COPY ./src/SimSun-01.ttf ${LAMBDA_TASK_ROOT}/
 
 # Command to run the Lambda function
 CMD ["long_running_job.lambda_handler"]

@@ -47,3 +47,7 @@ The application uses several AWS resources, including Lambda functions and an AP
 sam build
 sam deploy
 ```
+
+
+**NOTES**
+1. We use container type of lambda function other than zip type because the size (layer+code) exceeds 250M , this is due to we use three big packages: numpy, pandas and matplotlib.

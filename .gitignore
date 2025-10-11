@@ -245,3 +245,6 @@ $RECYCLE.BIN/
 
 
 client/node_modules
+
+lambda/layers/python/*
+lambda/.aws-sam/*
