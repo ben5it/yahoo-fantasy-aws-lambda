@@ -1,5 +1,5 @@
 Jinja2
-matplotlib
+matplotlib==3.10.6
 numpy
 objectpath
 pandas
