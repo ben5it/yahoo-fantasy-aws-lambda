@@ -1,33 +1,6 @@
 {
   "configurations": [
     {
-      "type": "aws-sam",
-      "request": "direct-invoke",
-      "name": "Code-leagues",
-      "invokeTarget": {
-        "target": "code",
-        "lambdaHandler": "long_running_job.lambda_handler",
-        "projectRoot": "${workspaceFolder}/lambda/src"
-      },
-      "lambda": {
-        "runtime": "python3.12",
-        "payload": {
-          "json": {
-            "rawPath": "/api/leagues",
-            "cookies": ["sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"]
-          }
-        },
-        "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
-          "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
-          "DB_SESSION_TABLE": "yahoo-fantasy-session",
-          "DB_TASK_TABLE": "yahoo-fantasy-task",
-          "DATA_BUCKET_NAME": "yahoo-fantasy-website",
-          "BASE_URL": "https://fantasy.laohuang.org"
-        }
-      }
-    },
-    {
       "name": "Launch Mock server",
       "program": "${workspaceFolder}/vue-app/mock-server.js",
       "request": "launch",
@@ -37,7 +10,7 @@
       "type": "node"
     },
     {
-      "type": "aws-sam", 
+      "type": "aws-sam",
       "request": "direct-invoke",
       "name": "Task",
       "invokeTarget": {
@@ -46,16 +19,16 @@
         "logicalId": "LongRunningJobFunction"
       },
       "lambda": {
-        "runtime": "python3.12", // Add the runtime property
+        "runtime": "python3.11", // Add the runtime property
         "payload": {
           "json": {
             "sessionId": "f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc",
             "league_id": "29689",
-            "week": "10"        
+            "week": "10"
           }
         },
         "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
           "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
@@ -74,15 +47,12 @@
         "logicalId": "WebServerFunction"
       },
       "lambda": {
-        "runtime": "python3.12",
+        "runtime": "python3.11",
         "payload": {
-          "json": {
-            "rawPath": "/login",
-            "cookies": ["sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"]
-          }
+          "path": "${workspaceFolder}/lambda/events/login.json",
         },
         "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
           "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
@@ -101,18 +71,12 @@
         "logicalId": "WebServerFunction"
       },
       "lambda": {
-        "runtime": "python3.12",
+        "runtime": "python3.11",
         "payload": {
-          "json": {
-            "rawPath": "/api/getdata",
-            "cookies": ["sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"],
-            "queryStringParameters": {
-              "league_id": "29689"
-            },
-          }
+          "path": "${workspaceFolder}/lambda/events/data.json",
         },
         "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
           "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
@@ -132,19 +96,12 @@
         "logicalId": "WebServerFunction"
       },
       "lambda": {
-        "runtime": "python3.12",
+        "runtime": "python3.11",
         "payload": {
-          "json": {
-            "rawPath": "/api/download",
-            "cookies": ["sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"],
-            "queryStringParameters": {
-              "league_id": "29689",
-              "week": "3"
-            },
-          }
+          "path": "${workspaceFolder}/lambda/events/download.json"
         },
         "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
           "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
@@ -164,15 +121,12 @@
         "logicalId": "WebServerFunction"
       },
       "lambda": {
-        "runtime": "python3.12",
+        "runtime": "python3.11",
         "payload": {
-          "json": {
-            "rawPath": "/api/leagues",
-            "cookies": ["sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"]
-          }
+          "path": "${workspaceFolder}/lambda/events/leaguges.json"
         },
         "environmentVariables": {
-          "CLIENT_ID":  "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
+          "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
           "CLIENT_SECRET": "d6c0814d-7381-4b6a-9363-b527e5810871",
           "DB_SESSION_TABLE": "yahoo-fantasy-session",
           "DB_TASK_TABLE": "yahoo-fantasy-task",
@@ -180,6 +134,6 @@
           "BASE_URL": "https://fantasy.laohuang.org"
         }
       }
-    }  
+    }
   ]
 }

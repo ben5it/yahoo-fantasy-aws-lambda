@@ -17,26 +17,74 @@ The backend contains two services:
   
 ## Local Development
 
-**Configurations**
+AWS SAM CLI’s sam local is a function-level emulator for rapid Lambda logic testing. It runs function code in a Docker container mimicking the AWS Lambda runtime and provides a local API server to trigger functions. You can also generate and manage test events for supported AWS services and pass them to local resources.
+
+Some of its core commands include:
+
+sam local invoke: Executes a one-time invocation of your Lambda function by running it inside a Docker container.
+sam local start-api: Spins up a local HTTP server that emulates API Gateway, letting you test your API-triggered functions.
+
+
+### Configurations
 
 1. Open fantasy.laohuang.org
 2. Login with Yahoo
-3. Get the sessionId from debug tool, request header cookie
+3. Get the sessionId from browser debug tool, in request header cookie
 4. Update sessionId in file 'events/analysis_payload.json'
 5. Modify league id and week in that same file if needed
 
-**Run**
+### Run
+
+Using SAM CLI
+
+`sam build`
+
+**One-time Invoke**
 
 ```
-sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json
+sam local invoke WebServerFunction -e events/login.json --env-vars env.json --profile husthsz2025
+sam local invoke WebServerFunction -e events/leagues.json --env-vars env.json --profile husthsz2025
+sam local invoke WebServerFunction -e events/data.json --env-vars env.json --profile husthsz2025
+sam local invoke WebServerFunction -e events/download.json --env-vars env.json --profile husthsz2025
+sam local invoke LongRunningJobFunction -e events/analysis.json --env-vars env.json --profile husthsz2025
+
+```
+NOTE:
+
+1. If you would like to see debug level log, then add --debug to the end of the command, like
+
+```
+sam local invoke WebServerFunction -e events/leagues.json --env-vars env.json --debug
+```
+
+1. --profile is a profile in your aws credential file 'C:\Users\huang\.aws\credentials'， like below
+   
+   ```
+   [husthsz2025]
+    # This key identifies your AWS account.
+    aws_access_key_id = XXXXXXXXXXXXXX
+    # Treat this secret key like a password. Never share it or store it in source
+    # control. If your secret key is ever disclosed, immediately use IAM to delete
+    # the key pair and create a new one.
+    aws_secret_access_key = YYYYYYYYYYYYYYYYY
+    region = us-east-1
+    ```
+
+**start as a server, then trigger many times**
+```
+sam local start-lambda -d 5678 --debug-function WebServerFunction
 ```
 
 
-**Debug**
 
+### Debug
+
+On
 ```
 sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json --debug
 ```
+
+
 
 ## Deploy
 
