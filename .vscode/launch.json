@@ -1,6 +1,19 @@
 {
   "configurations": [
     {
+      "name": "Debug SAM Local Lambda",
+      "type": "python",
+      "request": "attach",
+      "port": 5678,
+      "host": "localhost",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/lambda/src",
+          "remoteRoot": "/var/task"
+        }
+      ]
+    },
+    {
       "name": "Launch Mock server",
       "program": "${workspaceFolder}/vue-app/mock-server.js",
       "request": "launch",
@@ -123,7 +136,7 @@
       "lambda": {
         "runtime": "python3.11",
         "payload": {
-          "path": "${workspaceFolder}/lambda/events/leaguges.json"
+          "path": "${workspaceFolder}/lambda/events/leagues.json"
         },
         "environmentVariables": {
           "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",
