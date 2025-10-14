@@ -1,4 +1,4 @@
-# 丫虎 Fantasy
+# 丫虎饭堂
 
 This project delivers a web applicaition which fetches raw data via Yahoo [Fantasy Sports API](https://developer.yahoo.com/fantasysports/guide/), run analysis based on the data, then display the result in the web applicaiton.
 

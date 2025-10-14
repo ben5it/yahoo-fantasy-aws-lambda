@@ -123,7 +123,7 @@
       "lambda": {
         "runtime": "python3.11",
         "payload": {
-          "path": "${workspaceFolder}/lambda/events/leaguges.json"
+          "path": "${workspaceFolder}/lambda/events/leagues.json"
         },
         "environmentVariables": {
           "CLIENT_ID": "dj0yJmk9VUFhM1Zab1QwT2QzJmQ9WVdrOVVVbGhNa0ZtUkRRbWNHbzlNQT09JnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTAw",

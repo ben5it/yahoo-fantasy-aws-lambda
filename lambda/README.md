@@ -57,7 +57,7 @@ NOTE:
 sam local invoke WebServerFunction -e events/leagues.json --env-vars env.json --debug
 ```
 
-1. --profile is a profile in your aws credential file 'C:\Users\huang\.aws\credentials'， like below
+1. '--profile' is a profile in your aws credential file 'C:\Users\huang\.aws\credentials'， like below
    
    ```
    [husthsz2025]
@@ -70,18 +70,28 @@ sam local invoke WebServerFunction -e events/leagues.json --env-vars env.json --
     region = us-east-1
     ```
 
+1.  add '> output.json' if you would like to output the response to a json file
+   
+
 **start as a server, then trigger many times**
 ```
-sam local start-lambda -d 5678 --debug-function WebServerFunction
+sam local invoke LongRunningJobFunction -d 5678 -e events/analysis.json --env-vars env.json --profile husthsz2025
 ```
 
 
 
 ### Debug
 
+**AWS Toolkit**
+
+
+**Manual sam local invoke with debug port**
+
 On
 ```
 sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json --debug
+
+sam local start-lambda --debug-function WebServerFunction --env-vars env.json --profile husthsz2025 -d 5678
 ```
 
 
