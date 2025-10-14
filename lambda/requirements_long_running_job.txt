@@ -1,9 +1,7 @@
-boto3
-matplotlib
+Jinja2
+matplotlib==3.10.6
 numpy
 objectpath
 pandas
 requests
 s3fs
-Jinja2
-debugpy

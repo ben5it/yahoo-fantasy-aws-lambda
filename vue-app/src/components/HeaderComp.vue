@@ -2,7 +2,7 @@
   <header>
     <nav class="nav-bar">
       <div class="nav-logo">
-        <img src="/images/logo.png" alt="Logo" class="logo">
+        <img src="/images/favicon.png" alt="Logo" class="logo">
       </div>
       <div class="nav-links">
         <router-link to="/leagues">Analysis</router-link>

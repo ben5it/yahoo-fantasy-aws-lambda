@@ -3,11 +3,12 @@ FROM public.ecr.aws/lambda/python:3.11
 
 # Copy requirements.txt
 COPY requirements_web_server.txt ${LAMBDA_TASK_ROOT}/requirements.txt
-RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --prefer-binary --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy shared code and function code
-COPY config.py fantasy_api.py s3_operation.py utils.py ${LAMBDA_TASK_ROOT}/
-COPY web_server.py yahoo_oauth.py ${LAMBDA_TASK_ROOT}/
+COPY ./src/config.py ./src/fantasy_api.py ./src/s3_operation.py ./src/utils.py ${LAMBDA_TASK_ROOT}/
+COPY ./src/web_server.py ./src/yahoo_oauth.py ${LAMBDA_TASK_ROOT}/
 
 # Command to run the Lambda function
 CMD ["web_server.lambda_handler"]

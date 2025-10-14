@@ -68,12 +68,12 @@ app.get("/api/leagues", (req, res) => {
         draft_status: "postdraft",
         num_teams: 18,
         scoring_type: "head",
-        current_date: "2025-10-21",
         start_date: "2025-10-21",
         end_date: "2026-04-12",
         current_week: 1,
         start_week: "1",
-        end_week: "24"
+        end_week: "24",
+        playoff_start_week: "22"
       },
       {
         league_key: "466.l.35424",
@@ -84,12 +84,12 @@ app.get("/api/leagues", (req, res) => {
         draft_status: "postdraft",
         num_teams: 18,
         scoring_type: "head",
-        current_date: "2025-10-21",
         start_date: "2025-10-21",
         end_date: "2026-04-05",
         current_week: 1,
         start_week: "1",
-        end_week: "23"
+        end_week: "23",
+        playoff_start_week: "21"
       },
       {
         league_key: "466.l.161296",
@@ -100,12 +100,12 @@ app.get("/api/leagues", (req, res) => {
         draft_status: "predraft",
         num_teams: 16,
         scoring_type: "head",
-        current_date: "2025-10-21",
         start_date: "2025-10-21",
         end_date: "2026-03-29",
         current_week: 1,
         start_week: "1",
-        end_week: "22"
+        end_week: "22",
+        playoff_start_week: "20"
       },
       {
         league_key: "466.l.184111",
@@ -114,14 +114,11 @@ app.get("/api/leagues", (req, res) => {
         url: "https://basketball.fantasysports.yahoo.com/nba/184111",
         logo_url: false,
         draft_status: "predraft",
-        num_teams: 15,
+        num_teams: 16,
         scoring_type: "roto",
-        current_date: "2025-10-21",
         start_date: "2025-10-21",
         end_date: "2026-04-12",
-        current_week: 1,
-        start_week: "1",
-        end_week: null
+        playoff_start_week: "-1"
       }
     ] );
   } else {

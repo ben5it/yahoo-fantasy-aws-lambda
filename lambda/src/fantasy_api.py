@@ -44,14 +44,25 @@ def get_leagues():
 
     for league in leagues:
         league_id = league["league_id"]
+        league['playoff_start_week'] = get_league_settings(league["league_key"])
         league_info_file_key = f"{season}/{league_id}/league_info.json"
         s3op.write_json_to_s3(league, league_info_file_key)
 
     return leagues
 
 
-def get_league_info(league_key, league_id):
-    pass
+def get_league_settings(league_key):
+    uri = f"league/{league_key}/settings"
+    resp = make_request(uri)
+    logger.debug(json.dumps(resp))
+    t = objectpath.Tree(resp)
+
+    # for now, we only need playoff_start_week
+    jfilter = t.execute('$..league..settings..playoff_start_week')
+    for s in jfilter:
+        return s
+    
+    return "-1"
 
 def get_league_stats_categories(league_key):
     pass

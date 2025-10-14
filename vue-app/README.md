@@ -9,12 +9,10 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 ## Development
 
-Run below command, this will start a mock sever and also the web site.
+1. Run command `npm install` to install dependencies.
 
+1. Run `npm run dev` to test your code,  this will start a mock sever and also the web site.
 
-```
-npm run dev
-```
 
 NOTE:
 
@@ -24,6 +22,22 @@ If you would like to modify the mock data, you can modify below two files:
 
 ## Deploy
 
-```
-npm run deploy
-```
+You need to configure your AWS credential first
+
+   1. Create a user in AWS, and generate credential for it.
+   2. Edit file  'C:\Users\\<username\>\\.aws\credentials' 
+
+        ```
+        [default]
+        aws_access_key_id = XXXXXXXXXXXXXX
+        aws_secret_access_key = YYYYYYYYYYYYYYY
+        ```
+
+   3. Edit file 'C:\Users\\<username\>\\.aws\config' to set you AWS region
+
+        ```
+        [default]
+        region = us-east-1
+        ```
+
+Then run command `npm run deploy`

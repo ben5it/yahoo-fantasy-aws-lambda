@@ -1,0 +1,10 @@
+{
+  "rawPath": "/api/download",
+  "cookies": [
+    "sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"
+  ],
+  "queryStringParameters": {
+    "league_id": "29689",
+    "week": "3"
+  }
+}

@@ -582,7 +582,17 @@ export default {
       // so that they can get those result faster,
       // but we don't need to wait for those results.
       const startWeek = parseInt(currentLeague.start_week);
-      const endWeek = currentLeague.current_week;
+      const current_week = currentLeague.current_week;
+      const playoffStart = parseInt(currentLeague.playoff_start_week);
+
+      let endWeek;
+      // if playoffs started, only analyze up to the week before playoffs
+      if (playoffStart > startWeek && current_week >= playoffStart) {
+        endWeek = playoffStart - 1;
+      } else {
+        endWeek = current_week;
+      }
+
       for (let week = startWeek; week < endWeek; week++) {
         let url = `/api/getdata?league_id=${currentLeague.league_id}&week=${week}`;
         fetch(url);
