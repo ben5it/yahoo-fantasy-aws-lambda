@@ -93,7 +93,7 @@ The application uses several AWS resources, including Lambda functions and an AP
 
 ```
 sam build
-sam deploy
+sam deploy --profile husthsz2025
 ```
 
 
