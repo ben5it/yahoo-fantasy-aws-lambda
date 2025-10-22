@@ -2,7 +2,7 @@
   <div class="container">
     <h2 class="text-center my-4">Leagues</h2>
     <p class="text-center">
-      <strong>注：</strong>暂只支持 Head-to-Head 盟，且仅限于已完成选秀的联赛。
+      <strong>注：</strong>只支持 Head-to-Head 盟，且仅限于已完成选秀的联赛。
     </p>
     <div v-if="leagues?.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">
@@ -74,13 +74,21 @@ export default {
         return { label: 'Not Drafted', disabled: true, cls: 'btn-secondary' };
       }
       // 3. season not started
-      const today = new Date();
-      const start = new Date(league.start_date); // format: YYYY-MM-DD
-      if (today <= start) {
+      // Construct Pacific Time "now" and "start" with hour/minute/second set to 0
+      const pacificStart = new Date(`${league.start_date}T00:00:00-08:00`); 
+      const pacificNow = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+      );
+      // Compute difference in days
+      const diffDays = Math.round((pacificNow - pacificStart) / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 2) { // season started, and have at least two days data, so we can 
+        return { label: 'Analyze', disabled: false, cls: 'btn-primary' };
+      } else if (diffDays < 0) { // season not started
         return { label: 'Not Started', disabled: true, cls: 'btn-secondary' };
+      } else { // season already started, not enough data
+        return { label: 'Analyze', disabled: true, cls: 'btn-secondary' };
       }
-      // 4. ready
-      return { label: 'Analyze', disabled: false, cls: 'btn-primary' };
     };
 
     return {
