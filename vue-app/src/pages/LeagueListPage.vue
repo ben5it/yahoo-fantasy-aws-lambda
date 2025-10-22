@@ -73,18 +73,18 @@ export default {
       if (league.draft_status !== 'postdraft') {
         return { label: 'Not Drafted', disabled: true, cls: 'btn-secondary' };
       }
-      // 3. season not started
-      // Construct Pacific Time "now" and "start" with hour/minute/second set to 0
-      const pacificStart = new Date(`${league.start_date}T00:00:00-08:00`); 
-      const pacificNow = new Date(
-        new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-      );
-      // Compute difference in days
-      const diffDays = Math.round((pacificNow - pacificStart) / (1000 * 60 * 60 * 24));
 
-      if (diffDays > 2) { // season started, and have at least two days data, so we can 
+      // 3. check if season not started or not enough data
+      const start = new Date(`${league.start_date}T00:00:00-08:00`); 
+      const now = new Date();
+      // Compute difference in hours
+      const diffHours = Math.round((now - start) / (1000 * 60 * 60 ));
+
+      // usually the season open day only have few games, so that some team may not have data
+      // we require at least 48 hours after season start to ensure enough data is available
+      if (diffHours > 48) { 
         return { label: 'Analyze', disabled: false, cls: 'btn-primary' };
-      } else if (diffDays < 0) { // season not started
+      } else if (diffHours < 0) { // season not started
         return { label: 'Not Started', disabled: true, cls: 'btn-secondary' };
       } else { // season already started, not enough data
         return { label: 'Analyze', disabled: true, cls: 'btn-secondary' };
