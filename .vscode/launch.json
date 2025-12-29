@@ -134,6 +134,14 @@
           "BASE_URL": "https://fantasy.laohuang.org"
         }
       }
+    },
+    {
+      "name": "Debug test_chart.py",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/lambda/src/test_chart.py",
+      "console": "integratedTerminal"
     }
+    
   ]
 }

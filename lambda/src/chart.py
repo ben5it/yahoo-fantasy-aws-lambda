@@ -269,3 +269,111 @@ def generate_line_chart(df, title, y_label, league_name):
     plt.close()
 
     return img_data
+
+
+
+def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
+    """
+    Generate a trend chart for each team. The left axis is the actual value, the right axis is the weekly rank (descending, 1 is best),
+    and draw reference lines for the average and average rank.
+    Returns a dictionary with team names as keys and BytesIO objects of images as values.
+    """
+    import pandas as pd
+
+    img_dict = {}
+    weeks = trend_df.columns
+
+    # Calculate global min/max for y-axis (actual values)
+    y_min = trend_df.min().min()
+    y_max = trend_df.max().max()
+    # Add padding to y-axis limits for better visibility of the average line
+    y_range = y_max - y_min
+    y_pad = y_range * 0.08 if y_range > 0 else 1
+    y_min_adj = y_min - y_pad
+    y_max_adj = y_max + y_pad
+
+    # Calculate weekly rank (descending, 1 is best)
+    rank_df = trend_df.rank(axis=0, method='min', ascending=False)
+
+    # Calculate global min/max for rank axis
+    rank_min = rank_df.min().min()
+    rank_max = rank_df.max().max()
+    # Add padding to rank axis limits for better visibility of the average rank line
+    rank_range = rank_max - rank_min
+    rank_pad = rank_range * 0.08 if rank_range > 0 else 1
+    rank_min_adj = rank_min - rank_pad
+    rank_max_adj = rank_max + rank_pad
+
+    # Handle average and average rank
+    avg_map = average_df['Total'].to_dict()
+    avg_rank_map = average_df['Total'].rank(ascending=False, method='min').to_dict()
+
+    # Define more distinguishable colors
+    color_actual = '#0057b7'      # Deep blue
+    color_avg = '#ffb300'         # Vivid orange
+    color_rank = '#008744'        # Strong green
+    color_avg_rank = '#d62d20'    # Strong red
+
+    for team in trend_df.index:
+        fig, ax1 = plt.subplots(figsize=(10, 6), dpi=120)
+
+        # 1. Plot actual values (no marker, no legend)
+        ax1.plot(weeks, trend_df.loc[team], color=color_actual)
+        # 2. Plot average line (no legend)
+        avg_val = avg_map[team]
+        ax1.axhline(avg_val, color=color_avg, linestyle='--')
+        avg_val_str = f'{int(avg_val)}' if avg_val == int(avg_val) else f'{avg_val:.1f}'
+        mid_idx = (len(weeks) - 1) / 2
+        ax1.annotate(
+            avg_val_str,
+            xy=(mid_idx, avg_val),
+            xytext=(0, -15),
+            textcoords='offset points',
+            color=color_avg,
+            fontproperties=cnFontProp,
+            fontsize=18,  # bigger font size
+            va='bottom',
+            ha='center',
+            bbox=dict(boxstyle="round,pad=0.2", fc="none", ec=color_avg, lw=1.2)
+        )
+        ax1.set_ylabel(y_label_1, color=color_actual)
+        ax1.tick_params(axis='y', labelcolor=color_actual)
+        ax1.set_ylim(y_min_adj, y_max_adj)
+        ax1.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+        # 3. Plot rank on right axis (no marker, no legend)
+        ax2 = ax1.twinx()
+        ax2.plot(weeks, rank_df.loc[team], color=color_rank)
+        avg_rank_val = avg_rank_map[team]
+        avg_rank_val_str = f'{int(avg_rank_val)}' if avg_rank_val == int(avg_rank_val) else f'{avg_rank_val:.1f}'
+        ax2.axhline(avg_rank_val, color=color_avg_rank, linestyle='--')
+        ax2.annotate(
+            avg_rank_val_str,
+            xy=(mid_idx, avg_rank_val),
+            xytext=(0, 10),
+            textcoords='offset points',
+            color=color_avg_rank,
+            fontproperties=cnFontProp,
+            fontsize=18,  # bigger font size
+            va='bottom',
+            ha='center',
+            bbox=dict(boxstyle="round,pad=0.2", fc="none", ec=color_avg_rank, lw=1.2)
+        )
+        ax2.set_ylabel(y_label_2, color=color_rank)
+        ax2.tick_params(axis='y', labelcolor=color_rank)
+        ax2.invert_yaxis()  # Rank 1 at the top
+        ax2.set_ylim(rank_max_adj, rank_min_adj)
+        ax2.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+        # No legend at all
+
+        plt.title(f"{team} Trend Chart", fontproperties=cnFontProp, size=15)
+        plt.tight_layout()
+
+        img_data = BytesIO()
+        plt.savefig(img_data, format='png')
+        img_data.seek(0)
+        plt.close()
+        img_dict[team] = img_data
+
+    return img_dict
