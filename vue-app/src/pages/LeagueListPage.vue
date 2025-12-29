@@ -2,7 +2,7 @@
   <div class="container">
     <h2 class="text-center my-4">Leagues</h2>
     <p class="text-center">
-      <strong>注：</strong>只支持 Head-to-Head 盟，且仅限于已完成选秀的联赛。
+      <strong>注：</strong>建议当日全部比赛结束【半小时后】再进行分析，以确保数据更新完毕。
     </p>
     <div v-if="leagues?.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">
