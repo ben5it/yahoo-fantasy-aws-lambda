@@ -387,12 +387,9 @@ def lambda_handler(event, context):
             s3op.write_image_to_s3(img_data, rank_trend_img_file_path)
 
             # generate point chart for cumulative weeks
-            # point_trend_img_file_path = season_folder_key + "point_trend.png"
-            # img_data = chart.generate_line_chart(point_trend_df, '每周战力', 'Point', league_name)
-            # s3op.write_image_to_s3(img_data, point_trend_img_file_path)
             img_list = chart.generate_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
             for idx, img_data in enumerate(img_list):
-                point_trend_img_file_path = f"{season_folder_key}point_trend_{idx+1}.png"
+                point_trend_img_file_path = f"{season_folder_key}point_trend_{idx+1:02d}.png"
                 s3op.write_image_to_s3(img_data, point_trend_img_file_path)
 
             # generate score chart for cumulative weeks
@@ -471,7 +468,8 @@ def lambda_handler(event, context):
             narrow_victory_over_weeks_df, \
             styled_diff_from_median_over_weeks_df, \
             styled_diff_from_total_over_weeks_df, \
-            styled_narrow_victory_over_weeks_df
+            styled_narrow_victory_over_weeks_df, \
+            img_list
         gc.collect()
     update_task_status(task_id, {  "percentage": 75 })
 

@@ -1,9 +1,9 @@
 {
   "rawPath": "/api/getdata",
   "cookies": [
-    "sessionId=f8f20fbb-c0cd-4e02-851d-fb2a3ac4cbcc"
+    "sessionId=a57037b0-db14-4b08-a7db-b0fe9b80c268"
   ],
   "queryStringParameters": {
-    "league_id": "29689"
+    "league_id": "25038"
   }
 }

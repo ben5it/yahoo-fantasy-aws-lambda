@@ -9,6 +9,15 @@ const port = 3001;
 app.use(express.json());
 app.use(cookieParser());
 
+// Enable CORS for all routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 // In-memory storage for demonstration purposes
 
 let valid_sessionId = null;

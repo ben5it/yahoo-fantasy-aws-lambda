@@ -329,15 +329,15 @@ def get_result(league_id, week, status):
     # here 75% needs to be synced with the value in the long running task
     if state == 'COMPLETED' or ( state == 'IN_PROGRESS' and percentage >= 75):
         pie_charts = get_files_with_pattern(season_prefix, "pie_chart_")
+        point_trend_charts = get_files_with_pattern(season_prefix, "point_trend_")
         resp_data['result']['cumulative'] = {
                 "rank_trend": season_prefix + "rank_trend.png",
-                "point_trend": season_prefix + "point_trend.png",
-                "score_trend": season_prefix + "score_trend.png",
                 "standing": season_prefix + "standing.html",
                 "median_diff_trend": season_prefix + "median_diff_trend.html",
                 "total_diff_trend": season_prefix + "total_diff_trend.html",
                 "narrow_victory_trend": season_prefix + "narrow_victory_trend.html",
-                "pie_charts": pie_charts
+                "pie_charts": pie_charts,
+                "point_trend_charts": point_trend_charts
         }
 
     # forecast data is only available when the analysis is completed
