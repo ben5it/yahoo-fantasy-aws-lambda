@@ -387,7 +387,7 @@ def lambda_handler(event, context):
             s3op.write_image_to_s3(img_data, rank_trend_img_file_path)
 
             # generate point chart for cumulative weeks
-            img_list = chart.generate_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
+            img_list = chart.generate_power_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
             for idx, img_data in enumerate(img_list):
                 point_trend_img_file_path = f"{season_folder_key}point_trend_{idx+1:02d}.png"
                 s3op.write_image_to_s3(img_data, point_trend_img_file_path)
@@ -655,8 +655,8 @@ def apply_style_for_roto_df(df, caption):
 
 def apply_style_for_h2h_df(df, tier_point, caption):
 
-    styled_df = df.style.apply(highlight_based_on_value, value=tier_point, subset=df.columns[0:-3])\
-        .apply(highlight_last_n_columns, n=3, subset=df.columns[-3:], axis=1)\
+    styled_df = df.style.apply(highlight_based_on_value, value=tier_point, subset=df.columns[0:-5])\
+        .apply(highlight_last_n_columns, n=5, subset=df.columns[-5:], axis=1)\
         .format(remove_trailing_zeros)\
         .set_caption(caption)
 

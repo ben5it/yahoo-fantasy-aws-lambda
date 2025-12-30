@@ -272,7 +272,7 @@ def generate_line_chart(df, title, y_label, league_name):
 
 
 
-def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2, league_name):
+def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, league_name):
     """
     Generate a trend chart for each team. The left axis is the actual value, the right axis is the weekly rank (descending, 1 is best),
     and draw reference lines for the average and average rank.

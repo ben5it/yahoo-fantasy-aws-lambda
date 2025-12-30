@@ -110,7 +110,13 @@ def roto_score_to_battle_score(score_df, matchup_array):
             battle_df.iat[i, j] = score1
             battle_df.iat[j, i] = score2
 
-    # calculate the median point a team can get
+    # calculate the maximum score a team can get
+    battle_df['最优'] = battle_df.max(axis=1)
+    
+    # calculate the minimum score a team can get
+    battle_df['最差'] = battle_df.min(axis=1)
+
+    # calculate the median score a team can get
     battle_df['中位数'] = battle_df.median(axis=1)
 
     matchup_points = []
@@ -128,8 +134,7 @@ def roto_score_to_battle_score(score_df, matchup_array):
     sorted_df = battle_df.sort_values(by=['分差', '本周得分'], ascending=False)
 
      # Reorder the columns to match the order of the index
-    final_df = sorted_df.reindex(columns=sorted_df.index.tolist() + ['中位数', '本周得分', '分差'])
-
+    final_df = sorted_df.reindex(columns=sorted_df.index.tolist() + ['最优', '最差', '中位数', '本周得分', '分差'])
 
     return final_df
             
