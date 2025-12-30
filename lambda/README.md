@@ -30,7 +30,7 @@ sam local start-api: Spins up a local HTTP server that emulates API Gateway, let
 1. Open fantasy.laohuang.org
 2. Login with Yahoo
 3. Get the sessionId from browser debug tool, in request header cookie
-4. Update sessionId in file 'events/analysis_payload.json'
+4. Update sessionId in file 'events/analysis.json'
 5. Modify league id and week in that same file if needed
 
 ### Run

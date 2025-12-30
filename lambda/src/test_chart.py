@@ -90,9 +90,9 @@ y_label_1 = "Point"
 y_label_2 = "Rank"
 
 if __name__ == "__main__":
-    img_dict = generate_trend_charts(trend_df, average_df, y_label_1, y_label_2)
+    img_list = generate_trend_charts(trend_df, average_df, y_label_1, y_label_2, 'Hupu Alpha')
     # 保存图片到本地，验证效果
-    for team, img_data in img_dict.items():
-        with open(f"{team}_trend_chart.png", "wb") as f:
+    for idx, img_data in enumerate(img_list):
+        with open(f"point_trend_chart_{idx+1}.png", "wb") as f:
             f.write(img_data.getbuffer())
     print("测试完成，图片已保存。")

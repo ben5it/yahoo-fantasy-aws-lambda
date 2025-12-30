@@ -387,9 +387,13 @@ def lambda_handler(event, context):
             s3op.write_image_to_s3(img_data, rank_trend_img_file_path)
 
             # generate point chart for cumulative weeks
-            point_trend_img_file_path = season_folder_key + "point_trend.png"
-            img_data = chart.generate_line_chart(point_trend_df, '每周战力', 'Point', league_name)
-            s3op.write_image_to_s3(img_data, point_trend_img_file_path)
+            # point_trend_img_file_path = season_folder_key + "point_trend.png"
+            # img_data = chart.generate_line_chart(point_trend_df, '每周战力', 'Point', league_name)
+            # s3op.write_image_to_s3(img_data, point_trend_img_file_path)
+            img_list = chart.generate_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
+            for idx, img_data in enumerate(img_list):
+                point_trend_img_file_path = f"{season_folder_key}point_trend_{idx+1}.png"
+                s3op.write_image_to_s3(img_data, point_trend_img_file_path)
 
             # generate score chart for cumulative weeks
             score_trend_img_file_path = season_folder_key + "score_trend.png"

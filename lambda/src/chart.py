@@ -272,7 +272,7 @@ def generate_line_chart(df, title, y_label, league_name):
 
 
 
-def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
+def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2, league_name):
     """
     Generate a trend chart for each team. The left axis is the actual value, the right axis is the weekly rank (descending, 1 is best),
     and draw reference lines for the average and average rank.
@@ -280,7 +280,7 @@ def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
     """
     import pandas as pd
 
-    img_dict = {}
+    img_list = []
     weeks = trend_df.columns
 
     # Calculate global min/max for y-axis (actual values)
@@ -331,10 +331,9 @@ def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
             textcoords='offset points',
             color=color_avg,
             fontproperties=cnFontProp,
-            fontsize=18,  # bigger font size
+            fontsize=14,
             va='bottom',
-            ha='center',
-            bbox=dict(boxstyle="round,pad=0.2", fc="none", ec=color_avg, lw=1.2)
+            ha='center'
         )
         ax1.set_ylabel(y_label_1, color=color_actual)
         ax1.tick_params(axis='y', labelcolor=color_actual)
@@ -354,10 +353,9 @@ def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
             textcoords='offset points',
             color=color_avg_rank,
             fontproperties=cnFontProp,
-            fontsize=18,  # bigger font size
+            fontsize=12,  # normal font size
             va='bottom',
-            ha='center',
-            bbox=dict(boxstyle="round,pad=0.2", fc="none", ec=color_avg_rank, lw=1.2)
+            ha='center'
         )
         ax2.set_ylabel(y_label_2, color=color_rank)
         ax2.tick_params(axis='y', labelcolor=color_rank)
@@ -367,13 +365,13 @@ def generate_trend_charts(trend_df, average_df, y_label_1, y_label_2):
 
         # No legend at all
 
-        plt.title(f"{team} Trend Chart", fontproperties=cnFontProp, size=15)
+        plt.title(f"{league_name} - {team} 战力趋势图", fontproperties=cnFontProp, size=15)
         plt.tight_layout()
 
         img_data = BytesIO()
         plt.savefig(img_data, format='png')
         img_data.seek(0)
         plt.close()
-        img_dict[team] = img_data
+        img_list.append(img_data)
 
-    return img_dict
+    return img_list
