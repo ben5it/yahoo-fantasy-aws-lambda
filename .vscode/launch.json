@@ -1,13 +1,16 @@
 {
   "configurations": [
     {
-      "name": "Launch Mock server",
-      "program": "${workspaceFolder}/vue-app/mock-server.js",
+      "type": "node",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "node"
+      "name": "Debug Mock Server (env/dev)",
+      "program": "${workspaceFolder}/vue-app/mock-server.js",
+      "cwd": "${workspaceFolder}/vue-app",
+      "console": "integratedTerminal",
+      "runtimeExecutable": "node",
+      "env": {
+        "NODE_ENV": "development"
+      }
     },
     {
       "type": "aws-sam",

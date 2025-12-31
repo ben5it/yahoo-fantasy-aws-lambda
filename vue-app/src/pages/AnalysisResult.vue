@@ -201,11 +201,6 @@
                     <img :src="image" alt="Team Power Trend Chart" class="img-fluid" />
                   </div>
                 </div>
-                <!-- <img
-                  :src="analysisResult.cumulative.point_trend"
-                  alt="Point Trend"
-                  class="img-fluid"
-                /> -->
               </div>
               <div v-if="activeSubTab === 'trend_score'">
                 <img :src="analysisResult.cumulative.score_trend" alt="Score Trend" class="img-fluid" />
@@ -480,6 +475,11 @@ export default {
         // clear the previous result
         analysisResult.value = null;
         percentage.value = null;
+
+        // these three pages need to reload if switch week
+        weekStatsHtml.value = null;
+        weekPointHtml.value = null;
+        weekMatchupHtml.value = null;
 
         // Call the function immediately
         fetchData(week);

@@ -1,6 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import resp_data_array from "./mock-data.js";
+import {get_resp_data} from "./mock-data.js";
 
 const app = express();
 const port = 3001;
@@ -9,14 +9,6 @@ const port = 3001;
 app.use(express.json());
 app.use(cookieParser());
 
-// Enable CORS for all routes
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
 
 // In-memory storage for demonstration purposes
 
@@ -68,67 +60,54 @@ app.get("/api/leagues", (req, res) => {
   );
   if (sessionId === valid_sessionId) {
     res.json([
-      {
-        league_key: "466.l.25038",
-        league_id: "25038",
-        name: "Hupu Alpha 2025-2026",
-        url: "https://basketball.fantasysports.yahoo.com/nba/25038",
-        logo_url: "https://s.yimg.com/ep/cx/blendr/v2/image-backboard-png_1721241478475.png",
-        draft_status: "postdraft",
-        num_teams: 18,
-        scoring_type: "head",
-        start_date: "2025-10-21",
-        end_date: "2026-04-12",
-        current_week: 1,
-        start_week: "1",
-        end_week: "24",
-        playoff_start_week: "22"
-      },
-      {
-        league_key: "466.l.35424",
-        league_id: "35424",
-        name: "Star Basketball Association",
-        url: "https://basketball.fantasysports.yahoo.com/nba/35424",
-        logo_url: "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/67c5dbdd01aceece878642155459275a885462bc166ad53f07760f03570f111c.jpg",
-        draft_status: "postdraft",
-        num_teams: 18,
-        scoring_type: "head",
-        start_date: "2025-10-21",
-        end_date: "2026-04-05",
-        current_week: 1,
-        start_week: "1",
-        end_week: "23",
-        playoff_start_week: "21"
-      },
-      {
-        league_key: "466.l.161296",
-        league_id: "161296",
-        name: "【九麦竞价】25-26 天玑盟",
-        url: "https://basketball.fantasysports.yahoo.com/nba/161296",
-        logo_url: "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/07343414b68755c9a19b3eab151a900bf6f8c917fe9cf9b2fff7de46e49256d8.png",
-        draft_status: "predraft",
-        num_teams: 16,
-        scoring_type: "head",
-        start_date: "2025-10-21",
-        end_date: "2026-03-29",
-        current_week: 1,
-        start_week: "1",
-        end_week: "22",
-        playoff_start_week: "20"
-      },
-      {
-        league_key: "466.l.184111",
-        league_id: "184111",
-        name: "Beta 2025-26",
-        url: "https://basketball.fantasysports.yahoo.com/nba/184111",
-        logo_url: false,
-        draft_status: "predraft",
-        num_teams: 16,
-        scoring_type: "roto",
-        start_date: "2025-10-21",
-        end_date: "2026-04-12",
-        playoff_start_week: "-1"
-      }
+    {
+        "league_key": "466.l.25038",
+        "league_id": "25038",
+        "name": "Hupu Alpha 2025-2026",
+        "url": "https://basketball.fantasysports.yahoo.com/nba/25038",
+        "logo_url": "https://s.yimg.com/ep/cx/blendr/v2/image-backboard-png_1721241478475.png",
+        "draft_status": "postdraft",
+        "num_teams": 18,
+        "scoring_type": "head",
+        "start_date": "2025-10-21",
+        "end_date": "2026-04-12",
+        "current_week": 11,
+        "start_week": "1",
+        "end_week": "24",
+        "playoff_start_week": "22"
+    },
+    {
+        "league_key": "466.l.35424",
+        "league_id": "35424",
+        "name": "Star Basketball Association",
+        "url": "https://basketball.fantasysports.yahoo.com/nba/35424",
+        "logo_url": "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/67c5dbdd01aceece878642155459275a885462bc166ad53f07760f03570f111c.jpg",
+        "draft_status": "postdraft",
+        "num_teams": 18,
+        "scoring_type": "head",
+        "start_date": "2025-10-21",
+        "end_date": "2026-04-05",
+        "current_week": 11,
+        "start_week": "1",
+        "end_week": "23",
+        "playoff_start_week": "21"
+    },
+    {
+        "league_key": "466.l.161296",
+        "league_id": "161296",
+        "name": "【九麦竞价】25-26 天玑盟",
+        "url": "https://basketball.fantasysports.yahoo.com/nba/161296",
+        "logo_url": "https://yahoofantasysports-res.cloudinary.com/image/upload/t_s192sq/fantasy-logos/07343414b68755c9a19b3eab151a900bf6f8c917fe9cf9b2fff7de46e49256d8.png",
+        "draft_status": "postdraft",
+        "num_teams": 16,
+        "scoring_type": "head",
+        "start_date": "2025-10-21",
+        "end_date": "2026-03-29",
+        "current_week": 11,
+        "start_week": "1",
+        "end_week": "22",
+        "playoff_start_week": "20"
+    }
     ] );
   } else {
     res.status(401).json({ error: "Unauthorized" });
@@ -145,12 +124,20 @@ app.get("/api/getdata", (req, res) => {
     valid_sessionId
   );
   if (sessionId === valid_sessionId) {
-    const index = getDataCalled % resp_data_array.length;
+    // Get league_id and week from query string, convert to integer if present
+    const league_id = req.query.league_id !== undefined ? parseInt(req.query.league_id, 10) : 25038;
+    const week = req.query.week !== undefined ? parseInt(req.query.week, 10) : 1;
+    // Call getRespData with league_id, week, and getDataCalled
     getDataCalled++;
+    let resp_data = get_resp_data(league_id, week, 10);
 
-    let resp_data = resp_data_array[index];
-    const code = index  === resp_data_array.length - 1 ? 200 : 202;
-      res.status(code).json(resp_data);
+    const code = resp_data.state === 'COMPLETED' ? 200 : 202;
+    if (code === 200 )
+      {
+        getDataCalled = 0; // reset for the next week
+      }
+    res.status(code).json(resp_data);
+
   } else {
     res.status(401).json({ authenticated: false });
   }

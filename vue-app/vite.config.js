@@ -31,6 +31,11 @@ export default defineConfig({
       '/api/getdata': {
         target: 'http://localhost:3001',
         changeOrigin: true
+      },
+      // Add proxy for /data/, don't need to use mock server to data because those data are publicly accessable
+      '/data/': {
+        target: 'https://fantasy.laohuang.org',
+        changeOrigin: true
       }
     }
   }
