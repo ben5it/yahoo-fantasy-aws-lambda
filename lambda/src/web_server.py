@@ -330,6 +330,7 @@ def get_result(league_id, week, status):
     if state == 'COMPLETED' or ( state == 'IN_PROGRESS' and percentage >= 75):
         pie_charts = get_files_with_pattern(season_prefix, "pie_chart_")
         point_trend_charts = get_files_with_pattern(season_prefix, "point_trend_")
+        score_trend_charts = get_files_with_pattern(season_prefix, "score_trend_")
         resp_data['result']['cumulative'] = {
                 "rank_trend": season_prefix + "rank_trend.png",
                 "standing": season_prefix + "standing.html",
@@ -337,7 +338,8 @@ def get_result(league_id, week, status):
                 "total_diff_trend": season_prefix + "total_diff_trend.html",
                 "narrow_victory_trend": season_prefix + "narrow_victory_trend.html",
                 "pie_charts": pie_charts,
-                "point_trend_charts": point_trend_charts
+                "point_trend_charts": point_trend_charts,
+                "score_trend_charts": score_trend_charts
         }
 
     # forecast data is only available when the analysis is completed

@@ -152,7 +152,8 @@ def generate_rank_chart(df, league_name):
     for idx, team in enumerate(df.index):
         plt.plot(df.columns, df.loc[team], marker='o', label=team, color=colormap(idx))
         # Annotate the team names on the left side of the plot
-        plt.annotate(team, xy=(df.columns[0], df.loc[team][0]), xytext=(-60, 0),
+    # use .iat for positional access to avoid FutureWarning when using integer indices
+    plt.annotate(team, xy=(df.columns[0], df.loc[team].iat[0]), xytext=(-60, 0),
                      textcoords='offset points', ha='right', va='center', color=colormap(idx), fontproperties=cnFontProp)
 
     # Reverse the y-axis
@@ -274,11 +275,10 @@ def generate_line_chart(df, title, y_label, league_name):
 
 def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, league_name):
     """
-    Generate a trend chart for each team. The left axis is the actual value, the right axis is the weekly rank (descending, 1 is best),
-    and draw reference lines for the average and average rank.
-    Returns a dictionary with team names as keys and BytesIO objects of images as values.
+    Generate a matplotlib trend chart for each team showing actual values (left axis) and weekly rank (right axis) over weeks.
+    Each chart will have the title: '{league_name} - {team} 战力趋势图'.
+    Returns a list of BytesIO image data, one per team (order matches DataFrame index).
     """
-    import pandas as pd
 
     img_list = []
     weeks = trend_df.columns
@@ -318,7 +318,7 @@ def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, leag
         fig, ax1 = plt.subplots(figsize=(10, 6), dpi=120)
 
         # 1. Plot actual values (no marker, no legend)
-        ax1.plot(weeks, trend_df.loc[team], color=color_actual)
+        ax1.plot(weeks, trend_df.loc[team], color=color_actual, marker='o')
         # 2. Plot average line (no legend)
         avg_val = avg_map[team]
         ax1.axhline(avg_val, color=color_avg, linestyle='--')
@@ -342,7 +342,7 @@ def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, leag
 
         # 3. Plot rank on right axis (no marker, no legend)
         ax2 = ax1.twinx()
-        ax2.plot(weeks, rank_df.loc[team], color=color_rank)
+        ax2.plot(weeks, rank_df.loc[team], color=color_rank, marker='o')
         avg_rank_val = avg_rank_map[team]
         avg_rank_val_str = f'{int(avg_rank_val)}' if avg_rank_val == int(avg_rank_val) else f'{avg_rank_val:.1f}'
         ax2.axhline(avg_rank_val, color=color_avg_rank, linestyle='--')
@@ -372,6 +372,60 @@ def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, leag
         plt.savefig(img_data, format='png')
         img_data.seek(0)
         plt.close()
+        img_list.append(img_data)
+
+    return img_list
+
+def generate_score_line_charts(best_score_df, worst_score_df, medium_score_df, actual_score_df, league_name):
+    """
+    Generate a matplotlib line chart for each team showing best, worst, medium, and actual scores over weeks.
+    Each chart will have the title: '{league_name} - {team_name} Score Trend'.
+    Returns a list of BytesIO image data, one per team (order matches DataFrame index).
+    """
+
+    teams = best_score_df.index
+    weeks = best_score_df.columns
+    img_list = []
+    # Calculate global min/max for y-axis (score values) across all DataFrames
+    y_min = min(
+        best_score_df.min().min(),
+        worst_score_df.min().min(),
+        medium_score_df.min().min(),
+        actual_score_df.min().min()
+    )
+    y_max = max(
+        best_score_df.max().max(),
+        worst_score_df.max().max(),
+        medium_score_df.max().max(),
+        actual_score_df.max().max()
+    )
+    y_range = y_max - y_min
+    y_pad = y_range * 0.08 if y_range > 0 else 1
+    y_min_adj = y_min - y_pad
+    y_max_adj = y_max + y_pad
+
+    for team in teams:
+        fig, ax = plt.subplots(figsize=(10, 6), dpi=100)
+        ax.plot(weeks, best_score_df.loc[team], label='Best', color='green', marker='o')
+        ax.plot(weeks, worst_score_df.loc[team], label='Worst', color='red', marker='o')
+        ax.plot(weeks, medium_score_df.loc[team], label='Medium', color='orange', marker='o')
+        ax.plot(weeks, actual_score_df.loc[team], label='Actual', color='blue', marker='o')
+
+        ax.set_title(f"{league_name} - {team} Score Trend", fontproperties=cnFontProp, size=15)
+        ax.set_xlabel('Week', fontproperties=cnFontProp)
+        ax.set_ylabel('Score', fontproperties=cnFontProp)
+        ax.legend(prop=cnFontProp)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        ax.set_xticks(list(weeks))
+        ax.set_xticklabels(weeks, fontproperties=cnFontProp)
+        ax.set_ylim(y_min_adj, y_max_adj)
+        ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+        plt.tight_layout()
+
+        img_data = BytesIO()
+        plt.savefig(img_data, format='png')
+        img_data.seek(0)
+        plt.close(fig)
         img_list.append(img_data)
 
     return img_list

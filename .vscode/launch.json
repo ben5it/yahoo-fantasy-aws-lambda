@@ -13,6 +13,21 @@
       }
     },
     {
+      "name": "Attach to Lambda (sam local invoke)",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5890
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/lambda/src",
+          "remoteRoot": "/var/task"
+        }
+      ]
+    },
+    {
       "type": "aws-sam",
       "request": "direct-invoke",
       "name": "Task",
