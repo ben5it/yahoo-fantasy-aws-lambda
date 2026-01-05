@@ -75,7 +75,6 @@ export function get_resp_data(league_id, week, numCalled) {
         resp_data.percentage = 80;
         resp_data.result.cumulative = {
             "rank_trend": `data/2025/${league_id}/season/rank_trend.png`,
-            "score_trend": `data/2025/${league_id}/season/score_trend.png`,
             "standing": `data/2025/${league_id}/season/standing.html`,
             "median_diff_trend": `data/2025/${league_id}/season/median_diff_trend.html`,
             "total_diff_trend": `data/2025/${league_id}/season/total_diff_trend.html`,
@@ -119,6 +118,26 @@ export function get_resp_data(league_id, week, numCalled) {
                 `data/2025/${league_id}/season/point_trend_16.png`,
                 `data/2025/${league_id}/season/point_trend_17.png`,
                 `data/2025/${league_id}/season/point_trend_18.png`
+            ],
+            "score_trend_charts": [
+                `data/2025/${league_id}/season/score_trend_01.png`,
+                `data/2025/${league_id}/season/score_trend_02.png`,
+                `data/2025/${league_id}/season/score_trend_03.png`,
+                `data/2025/${league_id}/season/score_trend_04.png`,
+                `data/2025/${league_id}/season/score_trend_05.png`,
+                `data/2025/${league_id}/season/score_trend_06.png`,
+                `data/2025/${league_id}/season/score_trend_07.png`,
+                `data/2025/${league_id}/season/score_trend_08.png`,
+                `data/2025/${league_id}/season/score_trend_09.png`,
+                `data/2025/${league_id}/season/score_trend_10.png`,
+                `data/2025/${league_id}/season/score_trend_11.png`,
+                `data/2025/${league_id}/season/score_trend_12.png`,
+                `data/2025/${league_id}/season/score_trend_13.png`,
+                `data/2025/${league_id}/season/score_trend_14.png`,
+                `data/2025/${league_id}/season/score_trend_15.png`,
+                `data/2025/${league_id}/season/score_trend_16.png`,
+                `data/2025/${league_id}/season/score_trend_17.png`,
+                `data/2025/${league_id}/season/score_trend_18.png`
             ]
         }
     }

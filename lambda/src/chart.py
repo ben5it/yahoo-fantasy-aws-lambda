@@ -137,45 +137,66 @@ def get_radar_chart(stat_names, stat_values, value_limit, labels, title):
 
 
 def generate_rank_chart(df, league_name):
-
-    # Calculate the figure width based on the number of columns
+    # Calculate width based on number of columns (weeks). Use a per-week width
+    # and clamp to reasonable bounds so images don't become absurdly wide.
     num_columns = len(df.columns)
-    fig_width = min(max(12, num_columns), 20)
+    per_week_width = 1.1
+    fig_width = min(max(12, int(num_columns * per_week_width)), 24)
 
-    # Create the plot
-    plt.figure(figsize=(fig_width, 8), dpi=100)
+    # Create figure and axis so we can annotate per-team easily
+    fig, ax = plt.subplots(figsize=(fig_width, 8), dpi=100)
 
     # Get a colormap
     colormap = cm.get_cmap('tab20', len(df.index))
 
-    # Plot each team's data with unique colors
+    # Plot each team's data with unique colors and annotate the latest value on the right
+    last_pos = len(df.columns) - 1
     for idx, team in enumerate(df.index):
-        plt.plot(df.columns, df.loc[team], marker='o', label=team, color=colormap(idx))
-        # Annotate the team names on the left side of the plot
-    # use .iat for positional access to avoid FutureWarning when using integer indices
-    plt.annotate(team, xy=(df.columns[0], df.loc[team].iat[0]), xytext=(-60, 0),
-                     textcoords='offset points', ha='right', va='center', color=colormap(idx), fontproperties=cnFontProp)
+        series = df.loc[team]
+        # plot line
+        ax.plot(df.columns, series, marker='o', label=team, color=colormap(idx))
+        # annotate at the last (latest) point, put label to the right
+        try:
+            last_x = df.columns[last_pos]
+            last_y = series.iat[last_pos]
+        except Exception:
+            # Fallback in case of unexpected index types
+            last_x = df.columns[-1]
+            last_y = series.iloc[-1]
 
-    # Reverse the y-axis
-    plt.gca().invert_yaxis()
+        ax.annotate(
+            team,
+            xy=(last_x, last_y),
+            xytext=(8, 0),
+            textcoords='offset points',
+            ha='left',
+            va='center',
+            color=colormap(idx),
+            fontproperties=cnFontProp,
+            clip_on=False,
+        )
 
-     # Ensure rank is integer
-    plt.yticks(range(int(df.values.min()), int(df.values.max()) + 1))
+    # Reverse the y-axis so rank 1 is on top
+    ax.invert_yaxis()
 
-    # Add title and labels
-    plt.title(f'北伐! 北伐！ - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
+    # Ensure rank ticks are integer and cover full range
+    try:
+        ymin = int(df.values.min())
+        ymax = int(df.values.max())
+        ax.set_yticks(range(ymin, ymax + 1))
+    except Exception:
+        # fallback to default behavior
+        pass
 
-    # Place the legend outside of the plot on the right side
-    # plt.legend(title='Teams', bbox_to_anchor=(1.05, 1), loc='upper left', prop=cnFontProp)
-
-    # Adjust layout to make room for the legend
-    plt.tight_layout()
+    # Add title and adjust layout; leave a little right margin so labels aren't clipped
+    ax.set_title(f'北伐! 北伐！ - {league_name}', fontproperties=cnFontProp, size=15, weight='bold')
+    plt.tight_layout(rect=[0, 0, 0.95, 1])
 
     img_data = BytesIO()
     plt.savefig(img_data, format='png')
     img_data.seek(0)  # rewind to beginning of file
 
-    plt.close()
+    plt.close(fig)
 
     return img_data
 
@@ -363,9 +384,14 @@ def generate_power_trend_charts(trend_df, average_df, y_label_1, y_label_2, leag
         ax2.set_ylim(rank_max_adj, rank_min_adj)
         ax2.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
-        # No legend at all
+        # Draw grid using the right axis (so lines are placed at rank tick positions)
+        ax2.grid(True, linestyle='--', alpha=0.7)
 
-        plt.title(f"{league_name} - {team} 战力趋势图", fontproperties=cnFontProp, size=15)
+        # Set x-ticks/labels
+        ax1.set_xticks(list(weeks))
+        ax1.set_xticklabels(weeks, fontproperties=cnFontProp)
+
+        plt.title(f"{league_name} - {team} 战力走势图", fontproperties=cnFontProp, size=15)
         plt.tight_layout()
 
         img_data = BytesIO()
@@ -411,8 +437,7 @@ def generate_score_line_charts(best_score_df, worst_score_df, medium_score_df, a
         ax.plot(weeks, medium_score_df.loc[team], label='Medium', color='orange', marker='o')
         ax.plot(weeks, actual_score_df.loc[team], label='Actual', color='blue', marker='o')
 
-        ax.set_title(f"{league_name} - {team} Score Trend", fontproperties=cnFontProp, size=15)
-        ax.set_xlabel('Week', fontproperties=cnFontProp)
+        ax.set_title(f"{league_name} - {team} 得分走势图", fontproperties=cnFontProp, size=15)
         ax.set_ylabel('Score', fontproperties=cnFontProp)
         ax.legend(prop=cnFontProp)
         ax.grid(True, linestyle='--', alpha=0.7)

@@ -12,8 +12,8 @@ COPY ./src/long_running_job.py ./src/chart.py ./src/compute.py ${LAMBDA_TASK_ROO
 COPY ./src/SimSun-01.ttf ${LAMBDA_TASK_ROOT}/
 
 # Install debugpy for remote debugging
-RUN pip install debugpy
-ENTRYPOINT ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5890", "--wait-for-client", "-m", "awslambdaric"]
+# RUN pip install debugpy
+# ENTRYPOINT ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5890", "--wait-for-client", "-m", "awslambdaric"]
 
 # Command to run the Lambda function
 CMD ["long_running_job.lambda_handler"]
