@@ -75,24 +75,66 @@ sam local invoke WebServerFunction -e events/leagues.json --env-vars env.json --
 
 **start as a server, then trigger many times**
 ```
-sam local invoke LongRunningJobFunction -d 5678 -e events/analysis.json --env-vars env.json --profile husthsz2025
+sam local invoke LongRunningJobFunction -d 5890 -e events/analysis.json --env-vars env.json --profile husthsz2025
 ```
 
 
 
 ### Debug
 
-**AWS Toolkit**
+**Soultion 1: AWS Toolkit**
+
+There is a Visual Studio Code Extension named 'AWS Toolkit', I once can use it to debug, but now it doesn't work.
+Need to resolve it.
+
+**Solution 2: Manual sam local invoke with debug port**
+
+1. Make change to docker file adding debugy
+
+   ```   
+    # Install debugpy for remote debugging
+    RUN pip install debugpy
+    ENTRYPOINT ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5890", "--wait-for-client", "-m", "awslambdaric"]
+   ```
+
+2. Add debug configuration to launch.json
+   
+   ```
+    {
+      "name": "Attach to Lambda (sam local invoke)",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5890
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/lambda/src",
+          "remoteRoot": "/var/task"
+        }
+      ]
+    },
+   ```
+
+3. Edit event data under events folder, like events/analysis.json, you need to modify you sessionId.
+   
+   Login to https://fantasy.laohuang.org, and then get the session id in browser debug tool.
+
+4. Sam build
+   ```
+   sam build
+   ```
+
+5. Invoke lambda function
+
+   ```
+   sam local invoke LongRunningJobFunction -d 5890 -e events/analysis.json --env-vars env.json --profile husthsz2025 
+   ```
+
+6. Attach to debug
 
 
-**Manual sam local invoke with debug port**
-
-On
-```
-sam local invoke LongRunningJobFunction --event events/analysis_payload.json --env-vars env.json --debug
-
-sam local start-lambda --debug-function WebServerFunction --env-vars env.json --profile husthsz2025 -d 5678
-```
 
 
 

@@ -209,7 +209,6 @@ def lambda_handler(event, context):
 
         rank_trend_df = pd.DataFrame(index=team_names)
         point_trend_df = pd.DataFrame(index=team_names)
-        score_trend_df = pd.DataFrame(index=team_names)
 
         # Below two dataframes are used to calculate the luck index for each team
         # Luck in H2H means you meet the right opponent at the right time
@@ -226,6 +225,10 @@ def lambda_handler(event, context):
         diff_from_median_over_weeks_df = pd.DataFrame(index=team_names)
         diff_from_total_over_weeks_df  = pd.DataFrame(index=team_names)
         narrow_victory_over_weeks_df  = pd.DataFrame(index=team_names)
+        best_score_over_weeks_df = pd.DataFrame(index=team_names)
+        worst_score_over_weeks_df = pd.DataFrame(index=team_names)
+        medium_score_over_weeks_df = pd.DataFrame(index=team_names)
+        actual_score_over_weeks_df = pd.DataFrame(index=team_names)
 
 
         start_progress = 45
@@ -325,8 +328,12 @@ def lambda_handler(event, context):
             # Add the rank column for each week to the rank_trend_df
             rank_trend_df[f'week {i}'] = cumulative_score_by_category_df['Rank']
             point_trend_df[f'week {i}'] = this_week_point_df['Total']
-            score_trend_df[f'week {i}'] = this_week_score_df['Point']
             diff_from_median_over_weeks_df[f'week {i}'] = this_week_matchup_df['分差']
+
+            best_score_over_weeks_df[f'week {i}'] = this_week_matchup_df['最优']
+            worst_score_over_weeks_df[f'week {i}'] = this_week_matchup_df['最差']
+            medium_score_over_weeks_df[f'week {i}'] = this_week_matchup_df['中位数']
+            actual_score_over_weeks_df[f'week {i}'] = this_week_matchup_df['本周得分']
 
             # calculate the rank diff from total rank
             diff_from_total_over_weeks_df[f'week {i}'] = 0
@@ -387,15 +394,30 @@ def lambda_handler(event, context):
             s3op.write_image_to_s3(img_data, rank_trend_img_file_path)
 
             # generate point chart for cumulative weeks
-            img_list = chart.generate_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
+            img_list = chart.generate_power_trend_charts(point_trend_df, total_point_df, 'Point', 'Rank', league_name)
             for idx, img_data in enumerate(img_list):
                 point_trend_img_file_path = f"{season_folder_key}point_trend_{idx+1:02d}.png"
                 s3op.write_image_to_s3(img_data, point_trend_img_file_path)
+            del img_list
 
             # generate score chart for cumulative weeks
-            score_trend_img_file_path = season_folder_key + "score_trend.png"
-            img_data = chart.generate_line_chart(score_trend_df, '每周得分', 'Score', league_name)
-            s3op.write_image_to_s3(img_data, score_trend_img_file_path)
+            # print("best_score_over_weeks_df:", best_score_over_weeks_df)
+            # print("worst_score_over_weeks_df:", worst_score_over_weeks_df)
+            # print("medium_score_over_weeks_df:", medium_score_over_weeks_df)
+            # print("actual_score_over_weeks_df:", actual_score_over_weeks_df)
+            # s3op.write_dataframe_to_csv_on_s3(best_score_over_weeks_df, season_folder_key + "best_score_over_weeks.csv")
+            # s3op.write_dataframe_to_csv_on_s3(worst_score_over_weeks_df, season_folder_key + "worst_score_over_weeks.csv")
+            # s3op.write_dataframe_to_csv_on_s3(medium_score_over_weeks_df, season_folder_key + "medium_score_over_weeks.csv")
+            # s3op.write_dataframe_to_csv_on_s3(actual_score_over_weeks_df, season_folder_key + "actual_score_over_weeks.csv")
+            img_list = chart.generate_score_line_charts(best_score_over_weeks_df, worst_score_over_weeks_df, medium_score_over_weeks_df, actual_score_over_weeks_df, league_name)
+            for idx, img_data in enumerate(img_list):
+                score_trend_img_file_path = f"{season_folder_key}score_trend_{idx+1:02d}.png"
+                s3op.write_image_to_s3(img_data, score_trend_img_file_path)
+            del img_list
+
+            # score_trend_img_file_path = season_folder_key + "score_trend.png"
+            # img_data = chart.generate_line_chart(score_trend_df, '每周得分', 'Score', league_name)
+            # s3op.write_image_to_s3(img_data, score_trend_img_file_path)
 
             # add a column to display the total score of each team (row)
             diff_from_median_over_weeks_df['Total'] = diff_from_median_over_weeks_df.sum(axis=1)
@@ -462,14 +484,16 @@ def lambda_handler(event, context):
             styled_cumulative_score_by_category_df,\
             rank_trend_df, \
             point_trend_df, \
-            score_trend_df, \
             diff_from_median_over_weeks_df, \
             diff_from_total_over_weeks_df, \
             narrow_victory_over_weeks_df, \
             styled_diff_from_median_over_weeks_df, \
             styled_diff_from_total_over_weeks_df, \
             styled_narrow_victory_over_weeks_df, \
-            img_list
+            best_score_over_weeks_df, \
+            worst_score_over_weeks_df, \
+            medium_score_over_weeks_df, \
+            actual_score_over_weeks_df
         gc.collect()
     update_task_status(task_id, {  "percentage": 75 })
 
@@ -655,8 +679,8 @@ def apply_style_for_roto_df(df, caption):
 
 def apply_style_for_h2h_df(df, tier_point, caption):
 
-    styled_df = df.style.apply(highlight_based_on_value, value=tier_point, subset=df.columns[0:-3])\
-        .apply(highlight_last_n_columns, n=3, subset=df.columns[-3:], axis=1)\
+    styled_df = df.style.apply(highlight_based_on_value, value=tier_point, subset=df.columns[0:-5])\
+        .apply(highlight_last_n_columns, n=5, subset=df.columns[-5:], axis=1)\
         .format(remove_trailing_zeros)\
         .set_caption(caption)
 

@@ -203,7 +203,12 @@
                 </div>
               </div>
               <div v-if="activeSubTab === 'trend_score'">
-                <img :src="analysisResult.cumulative.score_trend" alt="Score Trend" class="img-fluid" />
+                <div class="row">
+                  <div v-for="(image, index) in analysisResult.cumulative
+                    .score_trend_charts" :key="index" class="col-sm-6">
+                    <img :src="image" alt="Team Score Trend Chart" class="img-fluid" />
+                  </div>
+                </div>
               </div>
             </div>
             <div v-else>
