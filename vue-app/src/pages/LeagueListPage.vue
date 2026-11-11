@@ -2,7 +2,7 @@
   <div class="container">
     <h2 class="text-center my-4">Leagues</h2>
     <p class="text-center">
-      <strong>注：</strong>建议当日全部比赛结束【半小时后】再进行分析，以确保数据更新完毕。
+      <strong>Note:</strong> It is recommended to run the analysis [half an hour after] all of today's games have ended, to ensure the data has finished updating.
     </p>
     <div v-if="leagues?.length" class="row">
       <div v-for="league in leagues" :key="league.id" class="col-md-6">

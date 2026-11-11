@@ -20,22 +20,22 @@
           <ul class="nav nav-tabs">
             <li class="nav-item">
               <a class="nav-link" :class="{ active: activeTab === 'week' }"
-                @click="setActiveTab('week', 'week_bar')">单周</a>
+                @click="setActiveTab('week', 'week_bar')">Weekly</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" :class="{ active: activeTab === 'season' }"
-                @click="setActiveTab('season', 'season_bar')">整季</a>
+                @click="setActiveTab('season', 'season_bar')">Season</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" :class="{ active: activeTab === 'trend' }"
-                @click="setActiveTab('trend', 'trend_rank')">走势</a>
+                @click="setActiveTab('trend', 'trend_rank')">Trend</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" :class="{ active: activeTab === 'luck' }"
-                @click="setActiveTab('luck', 'luck_median')">运势</a>
+                @click="setActiveTab('luck', 'luck_median')">Luck</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" :class="{ active: activeTab === 'forecast' }" @click="activeTab = 'forecast'">神棍</a>
+              <a class="nav-link" :class="{ active: activeTab === 'forecast' }" @click="activeTab = 'forecast'">Forecast</a>
             </li>
           </ul>
 
@@ -44,23 +44,23 @@
               <ul class="nav nav-pills my-3">
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'week_bar' }"
-                    @click="activeSubTab = 'week_bar'">战力柱状图</a>
+                    @click="activeSubTab = 'week_bar'">Power Bar Chart</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'week_point' }"
-                    @click="activeSubTab = 'week_point'">战力明细表</a>
+                    @click="activeSubTab = 'week_point'">Power Detail Table</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'week_stats' }"
-                    @click="activeSubTab = 'week_stats'">原始数据表</a>
+                    @click="activeSubTab = 'week_stats'">Raw Data Table</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'week_matchup' }"
-                    @click="activeSubTab = 'week_matchup'">虚拟对阵表</a>
+                    @click="activeSubTab = 'week_matchup'">Virtual Matchup Table</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'week_radar' }"
-                    @click="activeSubTab = 'week_radar'">雷达图</a>
+                    @click="activeSubTab = 'week_radar'">Radar Chart</a>
                 </li>
               </ul>
               <div v-if="activeSubTab === 'week_bar'">
@@ -68,8 +68,8 @@
               </div>
               <div v-if="activeSubTab === 'week_point'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>战力明细表采用Roto计分方式，
-                  即将每项数据按强弱排名，最强的队得分最高。<br />举例来说，如联盟有18支球队，则最强的队得分为18分，最弱的队得分为1分。
+                  <strong>Note:</strong> The power detail table uses Roto scoring,
+                  ranking each stat category by strength, with the strongest team scoring the highest. <br />For example, if a league has 18 teams, the strongest team scores 18 points and the weakest scores 1 point.
                 </p>
                 <div v-html="weekPointHtml"></div>
               </div>
@@ -78,13 +78,13 @@
               </div>
               <div v-if="activeSubTab === 'week_matchup'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>虚拟对阵表是计算你对阵联盟所有其他球队能取得的比分，取其中位数和你实际得分做对比。
+                  <strong>Note:</strong> The virtual matchup table calculates the score you would achieve against every other team in the league, then compares the median of those scores with your actual score.
                 </p>
                 <div v-html="weekMatchupHtml"></div>
               </div>
               <div v-if="activeSubTab === 'week_radar'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>雷达图是战力明细表的图形化显示，可以直观看出队伍在各项数据上的表现。
+                  <strong>Note:</strong> The radar chart is a graphical view of the power detail table, making it easy to see each team's performance across stat categories.
                 </p>
                 <div class="row">
                   <div v-for="(image, index) in analysisResult.week.radar_charts" :key="index" class="col-sm-4">
@@ -94,7 +94,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+              <p class="text-center my-3">Analysis in progress, please wait... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -103,27 +103,27 @@
               <ul class="nav nav-pills my-3">
                 <li class="nav-item" v-if="analysisResult.total">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_bar' }"
-                    @click="activeSubTab = 'season_bar'">战力柱状图</a>
+                    @click="activeSubTab = 'season_bar'">Power Bar Chart</a>
                 </li>
                 <li class="nav-item" v-if="analysisResult.total">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_point' }"
-                    @click="activeSubTab = 'season_point'">战力明细表</a>
+                    @click="activeSubTab = 'season_point'">Power Detail Table</a>
                 </li>
                 <li class="nav-item" v-if="analysisResult.total">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_stats' }"
-                    @click="activeSubTab = 'season_stats'">原始数据表</a>
+                    @click="activeSubTab = 'season_stats'">Raw Data Table</a>
                 </li>
                 <li class="nav-item" v-if="analysisResult.total">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_radar' }"
-                    @click="activeSubTab = 'season_radar'">雷达图</a>
+                    @click="activeSubTab = 'season_radar'">Radar Chart</a>
                 </li>
                 <li class="nav-item" v-if="analysisResult.cumulative">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_standing' }"
-                    @click="activeSubTab = 'season_standing'">排行榜</a>
+                    @click="activeSubTab = 'season_standing'">Standings</a>
                 </li>
                 <li class="nav-item" v-if="analysisResult.cumulative">
                   <a class="nav-link" :class="{ active: activeSubTab === 'season_pie' }"
-                    @click="activeSubTab = 'season_pie'">得分占比图</a>
+                    @click="activeSubTab = 'season_pie'">Score Share Chart</a>
                 </li>
               </ul>
               <div v-if="activeSubTab === 'season_bar'">
@@ -131,8 +131,8 @@
               </div>
               <div v-if="activeSubTab === 'season_point'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>战力明细表采用Roto计分方式，
-                  即将每项数据按强弱排名，最强的队得分最高。<br />举例来说，如联盟有18支球队，则最强的队得分为18分，最弱的队得分为1分。
+                  <strong>Note:</strong> The power detail table uses Roto scoring,
+                  ranking each stat category by strength, with the strongest team scoring the highest. <br />For example, if a league has 18 teams, the strongest team scores 18 points and the weakest scores 1 point.
                 </p>
                 <div v-html="totalPointHtml"></div>
               </div>
@@ -141,13 +141,13 @@
               </div>
               <div v-if="activeSubTab === 'season_standing'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>各分项的数字为您在该项数据总计赢得的分数。
+                  <strong>Note:</strong> The number for each category is the total points you have won in that stat category.
                 </p>
                 <div v-html="totalStandingHtml"></div>
               </div>
               <div v-if="activeSubTab === 'season_radar'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>雷达图是战力明细表的图形化显示，可以直观看出队伍在各项数据上的表现。
+                  <strong>Note:</strong> The radar chart is a graphical view of the power detail table, making it easy to see each team's performance across stat categories.
                 </p>
                 <div class="row">
                   <div v-for="(image, index) in analysisResult.total.radar_charts" :key="index" class="col-sm-4">
@@ -157,7 +157,7 @@
               </div>
               <div v-if="activeSubTab === 'season_pie'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>得分占比图是计算队伍各项数据<strong>实际拿分</strong>的占比。
+                  <strong>Note:</strong> The score share chart calculates the proportion of <strong>actual points earned</strong> by each team in every stat category.
                 </p>
                 <div class="row">
                   <div v-for="(image, index) in analysisResult.cumulative
@@ -168,7 +168,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+              <p class="text-center my-3">Analysis in progress, please wait... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -177,15 +177,15 @@
               <ul class="nav nav-pills my-3">
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'trend_rank' }"
-                    @click="activeSubTab = 'trend_rank'">排名</a>
+                    @click="activeSubTab = 'trend_rank'">Rank</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'trend_point' }"
-                    @click="activeSubTab = 'trend_point'">战力</a>
+                    @click="activeSubTab = 'trend_point'">Power</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'trend_score' }"
-                    @click="activeSubTab = 'trend_score'">拿分</a>
+                    @click="activeSubTab = 'trend_score'">Points</a>
                 </li>
               </ul>
               <div v-if="activeSubTab === 'trend_rank'">
@@ -193,7 +193,7 @@
               </div>
               <div v-if="activeSubTab === 'trend_point'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>虚直线表示赛季总数据， 实折线表示每周数据。
+                  <strong>Note:</strong> The dashed line represents season-total data, while the solid line represents weekly data.
                 </p>
                 <div class="row">
                   <div v-for="(image, index) in analysisResult.cumulative
@@ -212,7 +212,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+              <p class="text-center my-3">Analysis in progress, please wait... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
@@ -221,51 +221,51 @@
               <ul class="nav nav-pills my-3">
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'luck_median' }"
-                    @click="activeSubTab = 'luck_median'">走位</a>
+                    @click="activeSubTab = 'luck_median'">Median Luck</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'luck_total' }"
-                    @click="activeSubTab = 'luck_total'">爆种</a>
+                    @click="activeSubTab = 'luck_total'">Blowout Luck</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" :class="{ active: activeSubTab === 'luck_narrow_victory' }"
-                    @click="activeSubTab = 'luck_narrow_victory'">险胜</a>
+                    @click="activeSubTab = 'luck_narrow_victory'">Narrow Win</a>
                 </li>
               </ul>
               <p class="text-center my-3">
-                都说 H2H 全靠运气，那么就让我们看看到底谁的运气最好吧！
+                They say H2H is all about luck — let's see who's actually the luckiest!
               </p>
               <div v-if="activeSubTab === 'luck_median'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>走位是计算你每周中位数得分和实际得分的差值，正数表示你的运气好，负数表示你的运气差。
+                  <strong>Note:</strong> Median Luck is the difference between your weekly median score and your actual score. A positive number means good luck; a negative number means bad luck.
                 </p>
                 <div v-html="medianDiffTrendHtml"></div>
               </div>
               <div v-if="activeSubTab === 'luck_total'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>计算对手在和你对阵时的战力排名和他整季的战力排名之差。正数表示你当周对手拉跨，负数表示你当周对手爆种。
+                  <strong>Note:</strong> This is the difference between your opponent's power ranking in the week they faced you and their power ranking for the whole season. A positive number means your opponent underperformed that week; a negative number means your opponent had a breakout week.
                 </p>
                 <div v-html="totalDiffTrendHtml"></div>
               </div>
               <div v-if="activeSubTab === 'luck_narrow_victory'">
                 <p class="text-center my-3">
-                  <strong>注：</strong>险胜是指你某项数据刚好就赢了一点点，比如你篮板<b>200</b>个，你对手<b>199</b>个，那么你的险胜次数就加1。<br>
-                  对于小数，最后一位相差1，则认为是险胜, 如 0.478 对 0.477， 或者 1.98 对 1.97。<br>
-                  倘若当周你有三项数据险胜对面，但是另有一项数据被对面险胜，那么你当周的险胜次数就是2。<br>
-                  每周的险胜次数会累加到整季【Total】中。
+                  <strong>Note:</strong> A narrow win means you won a stat category by just a hair, e.g. you have <b>200</b> rebounds and your opponent has <b>199</b>, so your narrow win count increases by 1.<br>
+                  For decimals, a difference of 1 in the last digit counts as a narrow win, e.g. 0.478 vs 0.477, or 1.98 vs 1.97.<br>
+                  If you narrowly win three categories in a week but narrowly lose another, your narrow win count for that week is 2.<br>
+                  Weekly narrow win counts accumulate into the season-long [Total].
                 </p>
                 <div v-html="narrowVictorTrendHtml"></div>
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+              <p class="text-center my-3">Analysis in progress, please wait... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
 
           <div v-else-if="activeTab === 'forecast'">
             <div v-if="analysisResult.forecast">
               <p class="text-center my-3">
-                <strong>注：</strong>根据<strong>过往整季</strong>数据，预测下组对阵。<strong>未考虑</strong>球员场均数据以及对阵场次，结果仅供参考(娱乐)。
+                <strong>Note:</strong> Forecasts the next matchups based on <strong>past full-season</strong> data. Player per-game averages and the matchup schedule are <strong>not taken into account</strong> — results are for reference (entertainment) only.
               </p>
               <div v-if="analysisResult.forecast" class="row">
                 <div v-for="(image, index) in analysisResult.forecast" :key="index" class="col-sm-4">
@@ -274,7 +274,7 @@
               </div>
             </div>
             <div v-else>
-              <p class="text-center my-3">持续分析中，请稍等... <span v-if="percentage !== null">{{ percentage }}%</span></p>
+              <p class="text-center my-3">Analysis in progress, please wait... <span v-if="percentage !== null">{{ percentage }}%</span></p>
             </div>
           </div>
         </div>
@@ -287,7 +287,7 @@
           </p>
         </div>
         <p class="text-center my-3">
-          <strong>注：</strong>进度到25%左右的时候,会有单周分析结果出现。其它分析会在后台继续进行，分析完后会自动更新页面。
+          <strong>Note:</strong> Once progress reaches around 25%, the weekly analysis results will appear. Other analyses continue in the background and the page will update automatically once they finish.
         </p>
       </div>
     </div>

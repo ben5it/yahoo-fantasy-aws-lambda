@@ -3,8 +3,9 @@
     <div class="container text-center">
       <p></p>
       <div class="alert alert-warning" role="alert">
-        <strong>⚠️ 功能暂不可用：</strong>
-        本网站的数据均通过雅虎提供的 API 获取。今年雅虎加强了对 API 的管控，需要提交申请并通过审核后才能继续使用。我们已提交申请，目前正在等待雅虎审核（雅虎表示审核通常需要 1-2 周时间），请大家耐心等待，感谢理解！
+        <strong>⚠️ Feature temporarily unavailable:</strong>
+        This website's data is retrieved through the API provided by Yahoo. This year Yahoo has tightened control over API access, requiring an application to be submitted and approved before use can continue. We have submitted our application and are currently awaiting Yahoo's review (Yahoo states review usually takes 1-2 weeks). Thank you for your patience and understanding!
+        <div class="mt-1"><small>Last updated: 2026-11-11</small></div>
       </div>
       <p></p>
       <h6 class="text-secondary">Below is a demo. If you would like to have a try, click the 'Sign in with Yahoo' button at the bottom.
