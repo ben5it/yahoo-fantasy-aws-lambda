@@ -2,6 +2,10 @@
   <div>
     <div class="container text-center">
       <p></p>
+      <div class="alert alert-success" role="alert">
+        <strong>✅ 好消息：</strong>
+        Yahoo API 已恢复使用！我们的申请已获批准，网站现已完全恢复正常。感谢您的耐心等待！
+      </div>
       <p></p>
       <h6 class="text-secondary">Below is a demo. If you would like to have a try, click the 'Sign in with Yahoo' button at the bottom.
       </h6>
