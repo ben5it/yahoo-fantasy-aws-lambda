@@ -2,6 +2,7 @@
   <div>
     <h1>Contact me</h1>
     <p>Email: <a :href="mailtoLink">{{ email }}</a></p>
+    <p>Hupu ID: 黄老邪</p>
   </div>
 </template>
 
